@@ -1,0 +1,136 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+@import "tailwindcss";
+@plugin "daisyui";
+
+@theme {
+  --font-sans: 'Outfit', 'Inter', sans-serif;
+  --font-display: 'Outfit', sans-serif;
+  --color-brand-deep: #0f172a; /* Slate 900 */
+  --color-brand-steel: #475569; /* Slate 600 */
+  --color-brand-cyan: #3b82f6; /* Modern Vibrant Blue */
+  --color-brand-yellow: #f59e0b; /* Amber 500 */
+  --color-brand-orange: #f43f5e; /* Rose 500 */
+}
+
+:root {
+  background-color: #f8fafc;
+  color: var(--color-brand-deep);
+  font-family: 'Outfit', 'Inter', sans-serif;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  min-height: 100vh;
+  background-color: #f8fafc;
+  background-image: 
+    radial-gradient(at 0% 0%, rgba(79, 70, 229, 0.08) 0px, transparent 50%),
+    radial-gradient(at 100% 100%, rgba(244, 63, 94, 0.06) 0px, transparent 50%),
+    radial-gradient(at 100% 0%, rgba(20, 184, 166, 0.06) 0px, transparent 50%);
+  background-attachment: fixed;
+  position: relative;
+}
+
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background-image: 
+    radial-gradient(var(--color-brand-steel) 1px, transparent 1px), 
+    radial-gradient(var(--color-brand-steel) 1px, transparent 1px);
+  background-size: 32px 32px;
+  background-position: 0 0, 16px 16px;
+  opacity: 0.15; /* Subtle dot-grid overlay */
+  pointer-events: none;
+}
+
+/* Playful Gamified Cards */
+.playful-panel {
+  background: #ffffff;
+  border: 3px solid var(--color-brand-deep);
+  border-radius: 2rem;
+  box-shadow: 6px 6px 0px var(--color-brand-deep);
+}
+
+.playful-card {
+  background: #ffffff;
+  border: 3px solid var(--color-brand-deep);
+  border-radius: 1.5rem;
+  box-shadow: 4px 4px 0px var(--color-brand-deep);
+  transition: all 0.15s ease-out;
+}
+
+.playful-card.interactive {
+  cursor: pointer;
+}
+
+.playful-card.interactive:hover {
+  transform: translate(-2px, -2px);
+  box-shadow: 6px 6px 0px var(--color-brand-deep);
+}
+
+/* Playful Tactile Buttons (Pressable 3D Effect) */
+.playful-btn {
+  background: #ffffff;
+  color: var(--color-brand-deep);
+  border: 3px solid var(--color-brand-deep);
+  border-radius: 1.25rem;
+  font-weight: 700;
+  box-shadow: 3px 3px 0px var(--color-brand-deep);
+  transition: all 0.1s ease-out;
+  cursor: pointer;
+}
+
+.playful-btn:hover {
+  transform: translate(-1px, -1px);
+  box-shadow: 4px 4px 0px var(--color-brand-deep);
+}
+
+.playful-btn:active {
+  transform: translate(3px, 3px);
+  box-shadow: 0px 0px 0px var(--color-brand-deep);
+}
+
+/* Solid Color Variants for Playful Cards */
+.bg-yellow-card {
+  background-color: var(--color-brand-yellow);
+  color: var(--color-brand-deep);
+}
+
+.bg-cyan-card {
+  background-color: var(--color-brand-cyan);
+  color: #ffffff;
+}
+
+.bg-orange-card {
+  background-color: var(--color-brand-orange);
+  color: #ffffff;
+}
+
+.bg-steel-card {
+  background-color: var(--color-brand-steel);
+  color: #ffffff;
+}
+
+/* Custom Scrollbars */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: rgba(15, 23, 42, 0.05);
+  border-radius: 8px;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--color-brand-steel);
+  border: 2px solid #f8fafc;
+  border-radius: 8px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-brand-deep);
+}
+
+.gold-glow {
+  box-shadow: 4px 4px 0px var(--color-brand-deep), 0 0 20px rgba(245, 158, 11, 0.45);
+}
