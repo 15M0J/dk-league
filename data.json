@@ -72,14 +72,14 @@
       "name": "Frank",
       "teamId": "t2",
       "score": 0,
-      "isCommittee": false
+      "isCommittee": true
     },
     {
       "id": "p6_u",
       "name": "Justice",
       "teamId": "t2",
       "score": 0,
-      "isCommittee": true
+      "isCommittee": false
     },
     {
       "id": "p7_u",
@@ -100,7 +100,7 @@
       "name": "Dunsin",
       "teamId": "t3",
       "score": 0,
-      "isCommittee": true
+      "isCommittee": false
     },
     {
       "id": "p10_u",
@@ -114,7 +114,7 @@
       "name": "Tife",
       "teamId": "t3",
       "score": 0,
-      "isCommittee": false
+      "isCommittee": true
     },
     {
       "id": "p12_u",

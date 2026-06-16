@@ -37,13 +37,13 @@ const INITIAL_DATA = {
     { id: 'p2_u', name: 'Wale', teamId: 't1', score: 0, isCommittee: false },
     { id: 'p3_u', name: 'Joy', teamId: 't1', score: 0, isCommittee: false },
     { id: 'p4_u', name: 'Hauwa', teamId: 't1', score: 0, isCommittee: false },
-    { id: 'p5_u', name: 'Frank', teamId: 't2', score: 0, isCommittee: false },
-    { id: 'p6_u', name: 'Justice', teamId: 't2', score: 0, isCommittee: true },
+    { id: 'p5_u', name: 'Frank', teamId: 't2', score: 0, isCommittee: true },
+    { id: 'p6_u', name: 'Justice', teamId: 't2', score: 0, isCommittee: false },
     { id: 'p7_u', name: 'Matilda', teamId: 't2', score: 0, isCommittee: false },
     { id: 'p8_u', name: 'Jules', teamId: 't2', score: 0, isCommittee: false },
-    { id: 'p9_u', name: 'Dunsin', teamId: 't3', score: 0, isCommittee: true },
+    { id: 'p9_u', name: 'Dunsin', teamId: 't3', score: 0, isCommittee: false },
     { id: 'p10_u', name: 'Temi', teamId: 't3', score: 0, isCommittee: false },
-    { id: 'p11_u', name: 'Tife', teamId: 't3', score: 0, isCommittee: false },
+    { id: 'p11_u', name: 'Tife', teamId: 't3', score: 0, isCommittee: true },
     { id: 'p12_u', name: 'Ify', teamId: 't3', score: 0, isCommittee: false }
   ],
   logs: []
