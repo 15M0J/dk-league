@@ -2,6 +2,8 @@
 @import "tailwindcss";
 @plugin "daisyui";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 @theme {
   --font-sans: 'Outfit', 'Inter', sans-serif;
   --font-display: 'Outfit', sans-serif;
@@ -13,22 +15,56 @@
 }
 
 :root {
-  background-color: #f8fafc;
-  color: var(--color-brand-deep);
+  --bg-primary: #f8fafc;
+  --bg-card: #ffffff;
+  --bg-card-hover: #f1f5f9;
+  --text-primary: #0f172a;
+  --border-primary: #0f172a;
+  --shadow-primary: #0f172a;
+  --bg-body-before: var(--color-brand-steel);
+  --bg-dot-opacity: 0.15;
+  --bg-podium-2: rgba(71, 85, 105, 0.15);
+  --bg-podium-3: rgba(244, 63, 94, 0.1);
+  --bg-input: #ffffff;
+  --text-input: #1e293b;
+  --border-input: #0f172a;
+}
+
+:root.dark {
+  --bg-primary: #0b0f19;
+  --bg-card: #161f30;
+  --bg-card-hover: #1e293b;
+  --text-primary: #f8fafc;
+  --border-primary: #f8fafc;
+  --shadow-primary: #000000;
+  --bg-body-before: #38bdf8; /* Cyan-400 for bright dark-mode dots */
+  --bg-dot-opacity: 0.1;
+  --bg-podium-2: rgba(148, 163, 184, 0.2);
+  --bg-podium-3: rgba(244, 63, 94, 0.2);
+  --bg-input: #1e293b;
+  --text-input: #f8fafc;
+  --border-input: #f8fafc;
+}
+
+:root {
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
   font-family: 'Outfit', 'Inter', sans-serif;
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 body {
   margin: 0;
   padding: 0;
   min-height: 100vh;
-  background-color: #f8fafc;
+  background-color: var(--bg-primary);
   background-image: 
     radial-gradient(at 0% 0%, rgba(79, 70, 229, 0.08) 0px, transparent 50%),
     radial-gradient(at 100% 100%, rgba(244, 63, 94, 0.06) 0px, transparent 50%),
     radial-gradient(at 100% 0%, rgba(20, 184, 166, 0.06) 0px, transparent 50%);
   background-attachment: fixed;
   position: relative;
+  transition: background-color 0.3s ease;
 }
 
 body::before {
@@ -37,28 +73,30 @@ body::before {
   inset: 0;
   z-index: -1;
   background-image: 
-    radial-gradient(var(--color-brand-steel) 1px, transparent 1px), 
-    radial-gradient(var(--color-brand-steel) 1px, transparent 1px);
+    radial-gradient(var(--bg-body-before) 1px, transparent 1px), 
+    radial-gradient(var(--bg-body-before) 1px, transparent 1px);
   background-size: 32px 32px;
   background-position: 0 0, 16px 16px;
-  opacity: 0.15; /* Subtle dot-grid overlay */
+  opacity: var(--bg-dot-opacity); /* Subtle dot-grid overlay */
   pointer-events: none;
+  transition: opacity 0.3s ease;
 }
 
 /* Playful Gamified Cards */
 .playful-panel {
-  background: #ffffff;
-  border: 3px solid var(--color-brand-deep);
+  background: var(--bg-card);
+  border: 3px solid var(--border-primary);
   border-radius: 2rem;
-  box-shadow: 6px 6px 0px var(--color-brand-deep);
+  box-shadow: 6px 6px 0px var(--shadow-primary);
+  transition: background-color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
 }
 
 .playful-card {
-  background: #ffffff;
-  border: 3px solid var(--color-brand-deep);
+  background: var(--bg-card);
+  border: 3px solid var(--border-primary);
   border-radius: 1.5rem;
-  box-shadow: 4px 4px 0px var(--color-brand-deep);
-  transition: all 0.15s ease-out;
+  box-shadow: 4px 4px 0px var(--shadow-primary);
+  transition: background-color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease, transform 0.15s ease-out;
 }
 
 .playful-card.interactive {
@@ -67,29 +105,29 @@ body::before {
 
 .playful-card.interactive:hover {
   transform: translate(-2px, -2px);
-  box-shadow: 6px 6px 0px var(--color-brand-deep);
+  box-shadow: 6px 6px 0px var(--shadow-primary);
 }
 
 /* Playful Tactile Buttons (Pressable 3D Effect) */
 .playful-btn {
-  background: #ffffff;
-  color: var(--color-brand-deep);
-  border: 3px solid var(--color-brand-deep);
+  background: var(--bg-card);
+  color: var(--text-primary);
+  border: 3px solid var(--border-primary);
   border-radius: 1.25rem;
   font-weight: 700;
-  box-shadow: 3px 3px 0px var(--color-brand-deep);
-  transition: all 0.1s ease-out;
+  box-shadow: 3px 3px 0px var(--shadow-primary);
+  transition: background-color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease, transform 0.1s ease-out;
   cursor: pointer;
 }
 
 .playful-btn:hover {
   transform: translate(-1px, -1px);
-  box-shadow: 4px 4px 0px var(--color-brand-deep);
+  box-shadow: 4px 4px 0px var(--shadow-primary);
 }
 
 .playful-btn:active {
   transform: translate(3px, 3px);
-  box-shadow: 0px 0px 0px var(--color-brand-deep);
+  box-shadow: 0px 0px 0px var(--shadow-primary);
 }
 
 /* Solid Color Variants for Playful Cards */
@@ -124,13 +162,106 @@ body::before {
 }
 ::-webkit-scrollbar-thumb {
   background: var(--color-brand-steel);
-  border: 2px solid #f8fafc;
+  border: 2px solid var(--bg-primary);
   border-radius: 8px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--color-brand-deep);
+  background: var(--border-primary);
 }
 
 .gold-glow {
-  box-shadow: 4px 4px 0px var(--color-brand-deep), 0 0 20px rgba(245, 158, 11, 0.45);
+  box-shadow: 4px 4px 0px var(--shadow-primary), 0 0 20px rgba(245, 158, 11, 0.45);
 }
+
+/* Custom Overrides for Form Inputs and Options */
+.playful-input {
+  background-color: var(--bg-input) !important;
+  color: var(--text-primary) !important;
+  border: 3px solid var(--border-input) !important;
+  transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+}
+
+.playful-input option {
+  background-color: var(--bg-card);
+  color: var(--text-primary);
+}
+
+.playful-input:focus {
+  outline: none !important;
+  border-color: var(--color-brand-cyan) !important;
+}
+
+/* Table Override */
+table.table {
+  color: var(--text-primary) !important;
+}
+
+table.table thead tr {
+  color: #ffffff !important;
+}
+
+/* Modal Override */
+.playful-modal-card {
+  background-color: var(--bg-card) !important;
+  color: var(--text-primary) !important;
+  border: 3px solid var(--border-primary) !important;
+  box-shadow: 6px 6px 0px var(--shadow-primary) !important;
+  transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+}
+
+/* Dark Mode specific contrast and visibility overrides */
+:root.dark {
+  /* Make slate-600/700 text brighter in dark mode */
+  .text-slate-600 {
+    color: #cbd5e1 !important; /* slate-300 */
+  }
+  .text-slate-700 {
+    color: #cbd5e1 !important; /* slate-300 */
+  }
+  .text-brand-steel {
+    color: #94a3b8 !important; /* slate-400 */
+  }
+  
+  /* Accordion text, points indicators, and bold text */
+  .playful-card strong.text-brand-deep,
+  .playful-card span.text-brand-deep {
+    color: var(--text-primary) !important;
+  }
+  .playful-card strong {
+    color: var(--text-primary) !important;
+  }
+  
+  /* Warnings & Offences container cards inside the rules accordion */
+  .border-brand-yellow\/30 {
+    border-color: rgba(245, 158, 11, 0.4) !important;
+  }
+  .bg-brand-yellow\/5 {
+    background-color: rgba(245, 158, 11, 0.12) !important;
+  }
+  .border-brand-orange\/20 {
+    border-color: rgba(244, 63, 94, 0.4) !important;
+  }
+  .bg-brand-orange\/5 {
+    background-color: rgba(244, 63, 94, 0.12) !important;
+  }
+  .border-red-200 {
+    border-color: rgba(239, 68, 68, 0.4) !important;
+  }
+  .bg-rose-50\/20 {
+    background-color: rgba(244, 63, 94, 0.12) !important;
+  }
+  
+  /* Minor offence labels in warning color */
+  .playful-card span.text-brand-deep.text-sm {
+    color: var(--color-brand-yellow) !important;
+  }
+  
+  /* active/inactive states */
+  .border-brand-steel\/30 {
+    border-color: rgba(148, 163, 184, 0.3) !important;
+  }
+  .bg-white\/40 {
+    background-color: rgba(22, 31, 48, 0.4) !important;
+  }
+}
+

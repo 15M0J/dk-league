@@ -16,7 +16,9 @@ import {
   X,
   AlertTriangle,
   FileText,
-  ChevronDown
+  ChevronDown,
+  Sun,
+  Moon
 } from 'lucide-react';
 
 // --- Type Definitions ---
@@ -232,6 +234,26 @@ const API_BASE = window.location.hostname === 'localhost' || window.location.hos
 export default function App() {
   // --- State ---
   const [data, setData] = useState<LeaderboardData | null>(null);
+  const [theme, setTheme] = useState<'light' | 'dark'>(() => {
+    if (typeof window !== 'undefined') {
+      const stored = localStorage.getItem('theme');
+      if (stored === 'light' || stored === 'dark') return stored;
+      return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    }
+    return 'light';
+  });
+
+  useEffect(() => {
+    const root = document.documentElement;
+    if (theme === 'dark') {
+      root.classList.add('dark');
+      root.setAttribute('data-theme', 'dark');
+    } else {
+      root.classList.remove('dark');
+      root.setAttribute('data-theme', 'light');
+    }
+    localStorage.setItem('theme', theme);
+  }, [theme]);
   const [activeTab, setActiveTab] = useState<'teams' | 'players' | 'logs' | 'rules'>('teams');
   const [isAdmin, setIsAdmin] = useState(false);
   const [showPinModal, setShowPinModal] = useState(false);
@@ -288,7 +310,7 @@ export default function App() {
 
   // Poll for data updates every 5 seconds
   useEffect(() => {
-    fetchData();
+    Promise.resolve().then(() => fetchData());
     const interval = setInterval(fetchData, 5000);
     return () => clearInterval(interval);
   }, [fetchData]);
@@ -296,23 +318,29 @@ export default function App() {
   // Set default score target once data is fetched
   useEffect(() => {
     if (data) {
-      setScoreDay(data.currentDay);
-      setEditingDay(data.currentDay);
-      if (!scoreTargetId) {
-        if (scoreTargetType === 'player' && data.players.length > 0) {
-          setScoreTargetId(data.players[0].id);
-        } else if (scoreTargetType === 'team' && data.teams.length > 0) {
-          setScoreTargetId(data.teams[0].id);
+      Promise.resolve().then(() => {
+        if (scoreDay !== data.currentDay) {
+          setScoreDay(data.currentDay);
         }
-      }
-      if (!selectedPunishmentId && data.predefinedPunishments.length > 0) {
-        setSelectedPunishmentId(data.predefinedPunishments[0].id);
-      }
-      if (!warningTeamId && data.teams.length > 0) {
-        setWarningTeamId(data.teams[0].id);
-      }
+        if (editingDay !== data.currentDay) {
+          setEditingDay(data.currentDay);
+        }
+        if (!scoreTargetId) {
+          if (scoreTargetType === 'player' && data.players.length > 0) {
+            setScoreTargetId(data.players[0].id);
+          } else if (scoreTargetType === 'team' && data.teams.length > 0) {
+            setScoreTargetId(data.teams[0].id);
+          }
+        }
+        if (!selectedPunishmentId && data.predefinedPunishments.length > 0) {
+          setSelectedPunishmentId(data.predefinedPunishments[0].id);
+        }
+        if (!warningTeamId && data.teams.length > 0) {
+          setWarningTeamId(data.teams[0].id);
+        }
+      });
     }
-  }, [data, scoreTargetType, scoreTargetId, selectedPunishmentId, warningTeamId]);
+  }, [data, scoreTargetType, scoreTargetId, selectedPunishmentId, warningTeamId, scoreDay, editingDay]);
 
   // Update default target when target type changes
   const handleTargetTypeChange = (type: 'player' | 'team') => {
@@ -331,8 +359,10 @@ export default function App() {
     if (scoreActionType === 'points') {
       const a = PREDEFINED_ACHIEVEMENTS.find(item => item.id === selectedAchievementId);
       if (a) {
-        setCustomPoints(String(a.points));
-        setCustomDescription(a.label === '⭐ Custom Points Award' ? '' : a.label);
+        Promise.resolve().then(() => {
+          setCustomPoints(String(a.points));
+          setCustomDescription(a.label === '⭐ Custom Points Award' ? '' : a.label);
+        });
       }
     }
   }, [scoreActionType, selectedAchievementId]);
@@ -342,8 +372,10 @@ export default function App() {
     if (scoreActionType === 'punishment' && data && selectedPunishmentId) {
       const p = data.predefinedPunishments.find(item => item.id === selectedPunishmentId);
       if (p) {
-        setCustomPoints(String(Math.abs(p.points)));
-        setCustomDescription(p.label === '🚫 Custom Penalty' ? '' : p.label);
+        Promise.resolve().then(() => {
+          setCustomPoints(String(Math.abs(p.points)));
+          setCustomDescription(p.label === '🚫 Custom Penalty' ? '' : p.label);
+        });
       }
     }
   }, [scoreActionType, selectedPunishmentId, data]);
@@ -381,7 +413,7 @@ export default function App() {
       } else {
         setPinError('Incorrect PIN, try again! 🤨');
       }
-    } catch (err) {
+    } catch {
       setPinError('Error verifying PIN');
     }
   };
@@ -421,7 +453,7 @@ export default function App() {
       } else {
         notify(resData.error || 'Failed to submit score', 'error');
       }
-    } catch (err) {
+    } catch {
       notify('Network error', 'error');
     }
   };
@@ -442,7 +474,7 @@ export default function App() {
       } else {
         notify(resData.error || 'Failed to revert transaction', 'error');
       }
-    } catch (err) {
+    } catch {
       notify('Network error', 'error');
     }
   };
@@ -484,7 +516,7 @@ export default function App() {
       } else {
         notify(resData.error || 'Failed to add player', 'error');
       }
-    } catch (err) {
+    } catch {
       notify('Network error', 'error');
     }
   };
@@ -518,7 +550,7 @@ export default function App() {
       } else {
         notify(resData.error || 'Failed to add team', 'error');
       }
-    } catch (err) {
+    } catch {
       notify('Network error', 'error');
     }
   };
@@ -539,7 +571,7 @@ export default function App() {
       } else {
         notify(resData.error || 'Failed to update day', 'error');
       }
-    } catch (err) {
+    } catch {
       notify('Network error', 'error');
     }
   };
@@ -565,7 +597,7 @@ export default function App() {
       } else {
         notify(resData.error || 'Failed to issue warning', 'error');
       }
-    } catch (err) {
+    } catch {
       notify('Network error', 'error');
     }
   };
@@ -586,7 +618,7 @@ export default function App() {
       } else {
         notify(resData.error || 'Reset failed', 'error');
       }
-    } catch (err) {
+    } catch {
       notify('Network error', 'error');
     }
   };
@@ -741,37 +773,16 @@ export default function App() {
           <Sparkles className="w-4 h-4 text-brand-orange" />
           Who's Winning?! 🤔
         </div>
-        <h1 className="text-4xl sm:text-5xl font-black tracking-tight text-brand-deep drop-shadow-md">
+        <h1 className="text-4xl sm:text-5xl font-black tracking-tight text-brand-deep dark:text-white drop-shadow-md">
           DK League
         </h1>
 
-        {/* Current Day Ribbon & Admin Status */}
+        {/* Current Day Ribbon */}
         <div className="flex items-center gap-3 mt-2">
-          <div className="flex items-center gap-1.5 px-4 py-2 rounded-2xl bg-white border-3 border-brand-deep text-brand-deep text-sm font-black shadow-[3px_3px_0_#0f172a]">
+          <div className="flex items-center gap-1.5 px-4 py-2 rounded-2xl bg-white dark:bg-slate-800 border-3 border-brand-deep dark:border-white text-brand-deep dark:text-white text-sm font-black shadow-[3px_3px_0_#0f172a] dark:shadow-[3px_3px_0_#000]">
             <Calendar className="w-4 h-4 text-brand-orange" />
             <span>Day {data.currentDay} / 7 📅</span>
           </div>
-
-          <button
-            onClick={() => isAdmin ? setIsAdmin(false) : setShowPinModal(true)}
-            className={`flex items-center gap-1.5 px-4 py-2 rounded-2xl text-sm font-black border-3 border-brand-deep transition-all playful-btn ${
-              isAdmin 
-                ? 'bg-brand-yellow text-brand-deep shadow-[3px_3px_0_#0f172a]' 
-                : 'bg-white text-brand-steel shadow-[3px_3px_0_#0f172a]'
-            }`}
-          >
-            {isAdmin ? (
-              <>
-                <Unlock className="w-4 h-4 text-brand-deep" />
-                <span>Admin Active! 🔓</span>
-              </>
-            ) : (
-              <>
-                <Lock className="w-4 h-4" />
-                <span>Unlock Edit 🔐</span>
-              </>
-            )}
-          </button>
         </div>
       </header>
 
@@ -813,13 +824,13 @@ export default function App() {
 
       {/* Main Tabs */}
       <div className="flex justify-center mb-6">
-        <div className="flex p-1 rounded-2xl border-3 border-brand-deep bg-white max-w-lg w-full shadow-[3px_3px_0_#0f172a]">
+        <div className="flex p-1 rounded-2xl border-3 border-brand-deep dark:border-white bg-white dark:bg-slate-900 max-w-lg w-full shadow-[3px_3px_0_#0f172a] dark:shadow-[3px_3px_0_#000]">
           <button
             onClick={() => setActiveTab('teams')}
             className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-xs sm:text-sm font-black transition-all cursor-pointer border-2 ${
               activeTab === 'teams'
-                ? 'bg-brand-deep text-white border-brand-deep'
-                : 'bg-transparent text-brand-steel border-transparent hover:text-brand-deep'
+                ? 'bg-brand-deep dark:bg-brand-cyan text-white dark:text-brand-deep border-brand-deep dark:border-brand-cyan'
+                : 'bg-transparent text-brand-steel border-transparent hover:text-brand-deep dark:hover:text-white'
             }`}
           >
             <Users className="w-4 h-4" />
@@ -829,8 +840,8 @@ export default function App() {
             onClick={() => setActiveTab('players')}
             className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-xs sm:text-sm font-black transition-all cursor-pointer border-2 ${
               activeTab === 'players'
-                ? 'bg-brand-deep text-white border-brand-deep'
-                : 'bg-transparent text-brand-steel border-transparent hover:text-brand-deep'
+                ? 'bg-brand-deep dark:bg-brand-cyan text-white dark:text-brand-deep border-brand-deep dark:border-brand-cyan'
+                : 'bg-transparent text-brand-steel border-transparent hover:text-brand-deep dark:hover:text-white'
             }`}
           >
             <User className="w-4 h-4" />
@@ -840,8 +851,8 @@ export default function App() {
             onClick={() => setActiveTab('logs')}
             className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-xs sm:text-sm font-black transition-all cursor-pointer border-2 ${
               activeTab === 'logs'
-                ? 'bg-brand-deep text-white border-brand-deep'
-                : 'bg-transparent text-brand-steel border-transparent hover:text-brand-deep'
+                ? 'bg-brand-deep dark:bg-brand-cyan text-white dark:text-brand-deep border-brand-deep dark:border-brand-cyan'
+                : 'bg-transparent text-brand-steel border-transparent hover:text-brand-deep dark:hover:text-white'
             }`}
           >
             <FileText className="w-4 h-4" />
@@ -851,8 +862,8 @@ export default function App() {
             onClick={() => setActiveTab('rules')}
             className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-xs sm:text-sm font-black transition-all cursor-pointer border-2 ${
               activeTab === 'rules'
-                ? 'bg-brand-deep text-white border-brand-deep'
-                : 'bg-transparent text-brand-steel border-transparent hover:text-brand-deep'
+                ? 'bg-brand-deep dark:bg-brand-cyan text-white dark:text-brand-deep border-brand-deep dark:border-brand-cyan'
+                : 'bg-transparent text-brand-steel border-transparent hover:text-brand-deep dark:hover:text-white'
             }`}
           >
             <Sparkles className="w-4 h-4" />
@@ -877,11 +888,11 @@ export default function App() {
 
 
               {/* Standings Table */}
-              <div className="overflow-hidden border-3 border-brand-deep rounded-2xl bg-white shadow-[4px_4px_0_#0f172a]">
+              <div className="overflow-hidden border-3 border-brand-deep dark:border-white rounded-2xl bg-white dark:bg-slate-900 shadow-[4px_4px_0_#0f172a] dark:shadow-[4px_4px_0_#000]">
                 <div className="overflow-x-auto w-full">
                   <table className="table w-full text-left border-collapse m-0">
                     <thead>
-                      <tr className="bg-brand-deep text-white border-b-3 border-brand-deep text-xs font-black uppercase tracking-wider">
+                      <tr className="bg-brand-deep dark:bg-slate-800 text-white border-b-3 border-brand-deep dark:border-white text-xs font-black uppercase tracking-wider">
                         <th className="py-3 px-3 text-center w-12">Pos</th>
                         <th className="py-3 px-4">Team</th>
                         <th className="py-3 px-3 text-center w-16 text-brand-cyan">G (+)</th>
@@ -890,7 +901,7 @@ export default function App() {
                         <th className="py-3 px-4 text-center w-24 hidden sm:table-cell">Trend</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y-2 divide-brand-deep/10 font-bold text-brand-deep text-sm sm:text-base">
+                    <tbody className="divide-y-2 divide-brand-deep/10 dark:divide-white/10 font-bold text-brand-deep dark:text-white text-sm sm:text-base">
                       {sortedTeams.map((team, idx) => {
                         const isExpanded = !!expandedTeams[team.id];
                         const { gained, lost, net } = getTeamGainLoss(team);
@@ -907,10 +918,10 @@ export default function App() {
                           <React.Fragment key={team.id}>
                             <tr 
                               onClick={() => setExpandedTeams(prev => ({ ...prev, [team.id]: !prev[team.id] }))}
-                              className="hover:bg-slate-50/70 transition-all cursor-pointer select-none"
+                              className="hover:bg-slate-50/70 dark:hover:bg-slate-800/50 transition-all cursor-pointer select-none"
                             >
                               <td className="py-3.5 px-3 text-center">
-                                <div className={`w-8 h-8 rounded-xl flex items-center justify-center font-black border-2 border-brand-deep text-xs ${rankBg}`}>
+                                <div className={`w-8 h-8 rounded-xl flex items-center justify-center font-black border-2 border-brand-deep dark:border-white text-xs ${rankBg}`}>
                                   {idx + 1}
                                 </div>
                               </td>
@@ -918,26 +929,26 @@ export default function App() {
                               <td className="py-3.5 px-4 min-w-40 max-w-xs">
                                 <div className="flex flex-col">
                                   <div className="flex items-center gap-1.5 flex-wrap">
-                                    <span className="font-extrabold text-brand-deep text-base truncate">{team.name}</span>
-                                    <span className="text-[10px] text-brand-steel bg-slate-100 px-1.5 py-0.5 rounded border border-brand-steel/20 uppercase tracking-tight">
+                                    <span className="font-extrabold text-brand-deep dark:text-white text-base truncate">{team.name}</span>
+                                    <span className="text-[10px] text-brand-steel bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded border border-brand-steel/20 dark:border-slate-700/50 uppercase tracking-tight">
                                       {team.members.length}
                                     </span>
                                     {team.warnings && team.warnings > 0 ? (
                                       <span 
-                                        className="text-[10px] text-brand-orange bg-brand-orange/10 px-1.5 py-0.5 rounded border border-brand-orange/20 font-black uppercase tracking-tight flex items-center gap-0.5 cursor-help"
+                                        className="text-[10px] text-brand-orange dark:text-rose-400 bg-brand-orange/10 dark:bg-rose-950/20 px-1.5 py-0.5 rounded border border-brand-orange/20 dark:border-rose-700/20 font-black uppercase tracking-tight flex items-center gap-0.5 cursor-help"
                                         title="General warning used. Subsequent infractions will incur point deductions."
                                       >
                                         ⚠️ Warned
                                       </span>
                                     ) : (
                                       <span 
-                                        className="text-[10px] text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-300/30 font-black uppercase tracking-tight flex items-center gap-0.5 cursor-help"
+                                        className="text-[10px] text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/30 px-1.5 py-0.5 rounded border border-emerald-300/30 dark:border-emerald-700/30 font-black uppercase tracking-tight flex items-center gap-0.5 cursor-help"
                                         title="General warning available. First infraction will not deduct points."
                                       >
                                         ✅ Safe
                                       </span>
                                     )}
-                                    {isAdmin && (
+                                    {isAdmin && (!team.warnings || team.warnings === 0) && (
                                       <button
                                         type="button"
                                         onClick={(e) => {
@@ -951,13 +962,13 @@ export default function App() {
                                         <span>Warn</span>
                                       </button>
                                     )}
-                                    <ChevronDown className={`w-3.5 h-3.5 text-brand-steel transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`} />
+                                    <ChevronDown className={`w-3.5 h-3.5 text-brand-steel dark:text-slate-400 transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`} />
                                   </div>
                                 </div>
                               </td>
 
                               <td className="py-3.5 px-3 text-center text-brand-steel font-black">
-                                <span className="px-2 py-0.5 bg-emerald-50 text-emerald-600 border border-emerald-300/50 rounded-lg text-xs font-black">
+                                <span className="px-2 py-0.5 bg-emerald-50 dark:bg-emerald-950/30 text-emerald-600 dark:text-emerald-400 border border-emerald-300/50 dark:border-emerald-700/50 rounded-lg text-xs font-black">
                                   +{gained}
                                 </span>
                               </td>
@@ -965,15 +976,15 @@ export default function App() {
                               <td className="py-3.5 px-3 text-center font-black">
                                 <span className={`px-2 py-0.5 rounded-lg text-xs font-black ${
                                   lost < 0 
-                                    ? 'bg-rose-50 text-rose-500 border border-rose-300/50' 
-                                    : 'bg-slate-50 text-slate-400 border border-slate-300/50'
+                                    ? 'bg-rose-50 dark:bg-rose-950/30 text-rose-500 dark:text-rose-400 border border-rose-300/50 dark:border-rose-700/50' 
+                                    : 'bg-slate-50 dark:bg-slate-800 text-slate-400 dark:text-slate-500 border border-slate-300/50 dark:border-slate-700/50'
                                 }`}>
                                   {lost}
                                 </span>
                               </td>
 
                               <td className="py-3.5 px-3 text-center">
-                                <span className={`font-black text-base sm:text-lg ${net >= 0 ? 'text-brand-deep' : 'text-brand-orange'}`}>
+                                <span className={`font-black text-base sm:text-lg ${net >= 0 ? 'text-brand-deep dark:text-white' : 'text-brand-orange'}`}>
                                   {net >= 0 ? `+${net}` : net}
                                 </span>
                               </td>
@@ -986,15 +997,15 @@ export default function App() {
                             </tr>
 
                             {isExpanded && (
-                              <tr className="bg-slate-50/30">
+                              <tr className="bg-slate-50/30 dark:bg-slate-900/30">
                                 <td 
                                   colSpan={6} 
-                                  className="p-4 border-t border-b border-brand-deep/10"
+                                  className="p-4 border-t border-b border-brand-deep/10 dark:border-white/10"
                                   style={{ borderLeft: `6px solid ${teamColor}` }}
                                 >
                                   <div className="flex flex-col gap-4">
                                     <div>
-                                      <span className="text-[10px] text-brand-steel uppercase tracking-wider font-black block mb-2">
+                                      <span className="text-[10px] text-brand-steel dark:text-slate-400 uppercase tracking-wider font-black block mb-2">
                                         👤 Team Members:
                                       </span>
                                       <div className="flex flex-wrap gap-2">
@@ -1004,14 +1015,14 @@ export default function App() {
                                           return (
                                             <div 
                                               key={mId} 
-                                              className="flex items-center gap-1.5 px-3 py-1.5 rounded-2xl bg-white border-2 border-brand-deep text-xs font-black shadow-[2px_2px_0_#0f172a]"
+                                              className="flex items-center gap-1.5 px-3 py-1.5 rounded-2xl bg-white dark:bg-slate-800 border-2 border-brand-deep dark:border-white text-xs font-black shadow-[2px_2px_0_#0f172a] dark:shadow-[2px_2px_0_#000]"
                                             >
                                               <div className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ backgroundColor: teamColor }} />
-                                              <span className="text-brand-deep flex items-center gap-1">
+                                              <span className="text-brand-deep dark:text-white flex items-center gap-1">
                                                 {member.name}
                                                 {member.isCommittee && <span className="text-[10px]" title="Game Committee Member">👑</span>}
                                               </span>
-                                              <span className={`px-1.5 py-0.5 rounded-lg text-[10px] ${member.score >= 0 ? 'bg-brand-cyan/20 text-brand-deep' : 'bg-brand-orange/10 text-brand-orange'}`}>
+                                              <span className={`px-1.5 py-0.5 rounded-lg text-[10px] ${member.score >= 0 ? 'bg-brand-cyan/20 dark:bg-brand-cyan/10 text-brand-deep dark:text-brand-cyan' : 'bg-brand-orange/10 dark:bg-brand-orange/5 text-brand-orange dark:text-brand-orange'}`}>
                                                 {member.score >= 0 ? `+${member.score}` : member.score} pts
                                               </span>
                                             </div>
@@ -1039,10 +1050,10 @@ export default function App() {
                                           return (
                                             <div 
                                               key={day} 
-                                              className={`flex flex-col items-center justify-center p-2 rounded-2xl border-2 transition-all shadow-[2px_2px_0_#0f172a] ${
+                                              className={`flex flex-col items-center justify-center p-2 rounded-2xl border-2 transition-all shadow-[2px_2px_0_#0f172a] dark:shadow-[2px_2px_0_#000] ${
                                                 day === data.currentDay 
-                                                  ? 'bg-brand-yellow/10 border-brand-yellow' 
-                                                  : 'bg-white border-brand-deep/10'
+                                                  ? 'bg-brand-yellow/10 dark:bg-brand-yellow/5 border-brand-yellow' 
+                                                  : 'bg-white dark:bg-slate-800 border-brand-deep/10 dark:border-white/10'
                                               }`}
                                               title={`Day ${day}: ${dayPoints > 0 ? `+${dayPoints}` : dayPoints} points`}
                                             >
@@ -1093,25 +1104,25 @@ export default function App() {
                   return (
                     <div className="flex-1 flex flex-col items-center">
                       <div className="relative mb-2">
-                        <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-full bg-white border-3 border-brand-deep flex items-center justify-center shadow-[3px_3px_0_#0f172a]">
+                        <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-full bg-white dark:bg-slate-800 border-3 border-brand-deep dark:border-white flex items-center justify-center shadow-[3px_3px_0_#0f172a] dark:shadow-[3px_3px_0_#000]">
                           <User className="w-6 h-6 text-brand-steel" />
                         </div>
                       </div>
-                      <span className="font-black text-brand-deep text-xs sm:text-sm text-center truncate max-w-full flex items-center justify-center gap-1">
+                      <span className="font-black text-brand-deep dark:text-white text-xs sm:text-sm text-center truncate max-w-full flex items-center justify-center gap-1">
                         {secondPlace.name}
                         {secondPlace.isCommittee && <span className="text-[10px]" title="Game Committee Member">👑</span>}
                       </span>
                       <div className="flex items-center gap-1 mt-0.5 max-w-full">
                         <div className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ backgroundColor: teamColor }} />
-                        <span className="text-[10px] text-brand-steel font-extrabold uppercase tracking-wider truncate">
+                        <span className="text-[10px] text-brand-steel dark:text-slate-400 font-extrabold uppercase tracking-wider truncate">
                           {teamName}
                         </span>
                       </div>
                       
                       {/* Podium Column Stand */}
-                      <div className="w-full h-16 sm:h-20 mt-2 bg-brand-steel/15 border-3 border-brand-deep border-b-8 rounded-t-2xl flex flex-col justify-center items-center shadow-[3px_3px_0_#0f172a]">
+                      <div className="w-full h-16 sm:h-20 mt-2 bg-brand-steel/15 dark:bg-slate-700/35 border-3 border-brand-deep dark:border-white border-b-8 rounded-t-2xl flex flex-col justify-center items-center shadow-[3px_3px_0_#0f172a] dark:shadow-[3px_3px_0_#000]">
                         <span className="text-2xl font-black text-brand-steel">2</span>
-                        <span className="text-xs font-bold text-brand-deep">{secondPlace.score} pts</span>
+                        <span className="text-xs font-bold text-brand-deep dark:text-white">{secondPlace.score} pts</span>
                       </div>
                     </div>
                   );
@@ -1128,25 +1139,25 @@ export default function App() {
                     <div className="flex-1 flex flex-col items-center z-10">
                       <Crown className="w-7 h-7 text-brand-yellow mb-1" />
                       <div className="relative mb-2">
-                        <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-white border-3 border-brand-deep flex items-center justify-center shadow-[4px_4px_0_#0f172a]">
+                        <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-white dark:bg-slate-800 border-3 border-brand-deep dark:border-white flex items-center justify-center shadow-[4px_4px_0_#0f172a] dark:shadow-[4px_4px_0_#000]">
                           <User className="w-8 h-8 text-brand-yellow" />
                         </div>
                       </div>
-                      <span className="font-black text-brand-deep text-sm sm:text-base text-center truncate max-w-full flex items-center justify-center gap-1">
+                      <span className="font-black text-brand-deep dark:text-white text-sm sm:text-base text-center truncate max-w-full flex items-center justify-center gap-1">
                         {firstPlace.name}
                         {firstPlace.isCommittee && <span className="text-[10px]" title="Game Committee Member">👑</span>}
                       </span>
                       <div className="flex items-center gap-1 mt-0.5 max-w-full">
                         <div className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ backgroundColor: teamColor }} />
-                        <span className="text-xs text-brand-deep font-extrabold uppercase tracking-wider truncate">
+                        <span className="text-xs text-brand-deep dark:text-white font-extrabold uppercase tracking-wider truncate">
                           {teamName}
                         </span>
                       </div>
                       
                       {/* Podium Column Stand */}
-                      <div className="w-full h-24 sm:h-28 mt-2 bg-brand-yellow/20 border-3 border-brand-deep border-b-8 rounded-t-2xl flex flex-col justify-center items-center shadow-[4px_4px_0_#0f172a] gold-glow">
+                      <div className="w-full h-24 sm:h-28 mt-2 bg-brand-yellow/20 border-3 border-brand-deep dark:border-white border-b-8 rounded-t-2xl flex flex-col justify-center items-center shadow-[4px_4px_0_#0f172a] dark:shadow-[4px_4px_0_#000] gold-glow">
                         <span className="text-3xl font-black text-brand-yellow">1</span>
-                        <span className="text-sm font-black text-brand-deep">{firstPlace.score} pts</span>
+                        <span className="text-sm font-black text-brand-deep dark:text-white">{firstPlace.score} pts</span>
                       </div>
                     </div>
                   );
@@ -1162,25 +1173,25 @@ export default function App() {
                   return (
                     <div className="flex-1 flex flex-col items-center">
                       <div className="relative mb-2">
-                        <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-full bg-white border-3 border-brand-deep flex items-center justify-center shadow-[3px_3px_0_#0f172a]">
+                        <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-full bg-white dark:bg-slate-800 border-3 border-brand-deep dark:border-white flex items-center justify-center shadow-[3px_3px_0_#0f172a] dark:shadow-[3px_3px_0_#000]">
                           <User className="w-6 h-6 text-brand-orange" />
                         </div>
                       </div>
-                      <span className="font-black text-brand-deep text-xs sm:text-sm text-center truncate max-w-full flex items-center justify-center gap-1">
+                      <span className="font-black text-brand-deep dark:text-white text-xs sm:text-sm text-center truncate max-w-full flex items-center justify-center gap-1">
                         {thirdPlace.name}
                         {thirdPlace.isCommittee && <span className="text-[10px]" title="Game Committee Member">👑</span>}
                       </span>
                       <div className="flex items-center gap-1 mt-0.5 max-w-full">
                         <div className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ backgroundColor: teamColor }} />
-                        <span className="text-[10px] text-brand-steel font-extrabold uppercase tracking-wider truncate">
+                        <span className="text-[10px] text-brand-steel dark:text-slate-400 font-extrabold uppercase tracking-wider truncate">
                           {teamName}
                         </span>
                       </div>
                       
                       {/* Podium Column Stand */}
-                      <div className="w-full h-12 sm:h-14 mt-2 bg-brand-orange/10 border-3 border-brand-deep border-b-8 rounded-t-2xl flex flex-col justify-center items-center shadow-[3px_3px_0_#0f172a]">
+                      <div className="w-full h-12 sm:h-14 mt-2 bg-brand-orange/10 dark:bg-brand-orange/5 border-3 border-brand-deep dark:border-white border-b-8 rounded-t-2xl flex flex-col justify-center items-center shadow-[3px_3px_0_#0f172a] dark:shadow-[3px_3px_0_#000]">
                         <span className="text-xl font-black text-brand-orange">3</span>
-                        <span className="text-xs font-bold text-brand-deep">{thirdPlace.score} pts</span>
+                        <span className="text-xs font-bold text-brand-deep dark:text-white">{thirdPlace.score} pts</span>
                       </div>
                     </div>
                   );
@@ -1198,36 +1209,36 @@ export default function App() {
                   return (
                     <div 
                       key={player.id}
-                      className="playful-card p-3.5 flex items-center justify-between gap-4 border-brand-steel/30 hover:border-brand-steel/60"
+                      className="playful-card p-3.5 flex items-center justify-between gap-4 border-brand-steel/30 dark:border-slate-800 hover:border-brand-steel/60 dark:hover:border-slate-600"
                       style={{ borderLeft: `6px solid ${teamColor}` }}
                     >
                       <div className="flex items-center gap-3">
                         <span className="text-sm font-black text-brand-steel w-5 text-center">{actualIdx + 1}</span>
                         <div>
-                          <h4 className="font-black text-brand-deep text-sm sm:text-base flex items-center gap-1.5">
+                          <h4 className="font-black text-brand-deep dark:text-white text-sm sm:text-base flex items-center gap-1.5">
                             {player.name}
                             {player.isCommittee && (
-                              <span className="px-1.5 py-0.5 rounded-lg bg-brand-yellow/30 text-brand-deep border border-brand-yellow/50 text-[9px] font-black uppercase tracking-tight flex items-center gap-0.5">
+                              <span className="px-1.5 py-0.5 rounded-lg bg-brand-yellow/30 dark:bg-brand-yellow/10 text-brand-deep dark:text-brand-yellow border border-brand-yellow/50 text-[9px] font-black uppercase tracking-tight flex items-center gap-0.5">
                                 👑 Committee
                               </span>
                             )}
                           </h4>
                           <div className="flex items-center gap-1.5 mt-0.5">
                             <div className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ backgroundColor: teamColor }} />
-                            <span className="text-xs text-brand-steel font-extrabold uppercase tracking-wider">{teamName}</span>
+                            <span className="text-xs text-brand-steel dark:text-slate-400 font-extrabold uppercase tracking-wider">{teamName}</span>
                           </div>
                         </div>
                       </div>
 
                       <div className="flex items-center gap-1.5">
                         <span className={`text-xl font-black ${
-                          player.score > 0 ? 'text-brand-deep' :
+                          player.score > 0 ? 'text-brand-deep dark:text-brand-cyan' :
                           player.score < 0 ? 'text-brand-orange' :
                           'text-slate-400'
                         }`}>
                           {player.score > 0 ? `+${player.score}` : player.score}
                         </span>
-                        <span className="text-[10px] text-brand-steel font-extrabold uppercase">pts</span>
+                        <span className="text-[10px] text-brand-steel dark:text-slate-400 font-extrabold uppercase">pts</span>
                       </div>
                     </div>
                   );
@@ -1251,18 +1262,18 @@ export default function App() {
               className="space-y-4"
             >
               {/* Playful Team Filter */}
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-3 bg-white border-3 border-brand-deep rounded-2xl shadow-[3px_3px_0_#0f172a]">
-                <span className="text-sm font-black text-brand-deep flex items-center gap-1.5">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-3 bg-white dark:bg-slate-900 border-3 border-brand-deep dark:border-white rounded-2xl shadow-[3px_3px_0_#0f172a] dark:shadow-[3px_3px_0_#000]">
+                <span className="text-sm font-black text-brand-deep dark:text-white flex items-center gap-1.5">
                   🔍 Filter Log by Team:
                 </span>
                 <div className="flex flex-wrap gap-1.5">
                   <button
                     type="button"
                     onClick={() => setSelectedLogTeamId('all')}
-                    className={`px-3 py-1 rounded-xl text-xs font-black border-2 border-brand-deep transition-all cursor-pointer ${
+                    className={`px-3 py-1 rounded-xl text-xs font-black border-2 border-brand-deep dark:border-white transition-all cursor-pointer ${
                       selectedLogTeamId === 'all'
-                        ? 'bg-brand-deep text-white shadow-[2px_2px_0_#0f172a]'
-                        : 'bg-slate-100 text-brand-steel hover:text-brand-deep'
+                        ? 'bg-brand-deep dark:bg-brand-cyan text-white dark:text-brand-deep shadow-[2px_2px_0_#0f172a] dark:shadow-[2px_2px_0_#000]'
+                        : 'bg-slate-100 dark:bg-slate-800 text-brand-steel dark:text-slate-400 hover:text-brand-deep dark:hover:text-white'
                     }`}
                   >
                     All Teams 🌎
@@ -1272,10 +1283,10 @@ export default function App() {
                       type="button"
                       key={t.id}
                       onClick={() => setSelectedLogTeamId(t.id)}
-                      className={`px-3 py-1 rounded-xl text-xs font-black border-2 border-brand-deep transition-all cursor-pointer ${
+                      className={`px-3 py-1 rounded-xl text-xs font-black border-2 border-brand-deep dark:border-white transition-all cursor-pointer ${
                         selectedLogTeamId === t.id
-                          ? 'bg-brand-deep text-white shadow-[2px_2px_0_#0f172a]'
-                          : 'bg-slate-100 text-brand-steel hover:text-brand-deep'
+                          ? 'bg-brand-deep dark:bg-brand-cyan text-white dark:text-brand-deep shadow-[2px_2px_0_#0f172a] dark:shadow-[2px_2px_0_#000]'
+                          : 'bg-slate-100 dark:bg-slate-800 text-brand-steel dark:text-slate-400 hover:text-brand-deep dark:hover:text-white'
                       }`}
                     >
                       {t.name}
@@ -1327,42 +1338,42 @@ export default function App() {
                     <div 
                       key={log.id} 
                       className={`playful-card p-4 flex items-start justify-between gap-4 ${
-                        isNegative ? 'border-brand-orange/30 shadow-[3px_3px_0_#0f172a]' : 'border-brand-steel/20 shadow-[3px_3px_0_#0f172a]'
+                        isNegative ? 'border-brand-orange/30 shadow-[3px_3px_0_#0f172a] dark:shadow-[3px_3px_0_#000]' : 'border-brand-steel/20 shadow-[3px_3px_0_#0f172a] dark:shadow-[3px_3px_0_#000]'
                       }`}
                       style={{ borderLeft: `6px solid ${logTeamColor}` }}
                     >
                       <div className="flex items-start gap-3 min-w-0">
                         {/* Day circular badge */}
-                        <div className="flex-shrink-0 w-11 h-11 rounded-2xl bg-brand-steel/5 border-3 border-brand-deep flex flex-col items-center justify-center text-[10px] text-brand-steel font-black shadow-[2px_2px_0_#0f172a]">
+                        <div className="flex-shrink-0 w-11 h-11 rounded-2xl bg-brand-steel/5 dark:bg-slate-800 border-3 border-brand-deep dark:border-white flex flex-col items-center justify-center text-[10px] text-brand-steel dark:text-slate-400 font-black shadow-[2px_2px_0_#0f172a] dark:shadow-[2px_2px_0_#000]">
                           <span>Day</span>
-                          <span className="text-base font-black text-brand-deep mt-[-4px]">{log.day}</span>
+                          <span className="text-base font-black text-brand-deep dark:text-white mt-[-4px]">{log.day}</span>
                         </div>
                         
                         <div className="min-w-0">
                           <div className="flex items-center gap-1.5 flex-wrap">
-                            <span className="font-black text-brand-deep text-base">{log.targetName}</span>
-                            <span className="text-xs text-brand-steel font-bold">
+                            <span className="font-black text-brand-deep dark:text-white text-base">{log.targetName}</span>
+                            <span className="text-xs text-brand-steel dark:text-slate-400 font-bold">
                               ({log.targetType === 'player' ? 'Player' : 'Team'})
                             </span>
                             <div className="flex items-center gap-1.5">
                               <div className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ backgroundColor: logTeamColor }} />
-                              <span className="text-[10px] text-brand-steel font-extrabold uppercase tracking-wider">{logTeamName}</span>
+                              <span className="text-[10px] text-brand-steel dark:text-slate-400 font-extrabold uppercase tracking-wider">{logTeamName}</span>
                             </div>
                           </div>
-                          <p className="text-sm text-slate-700 mt-1 font-bold leading-tight">
+                          <p className="text-sm text-slate-700 dark:text-slate-300 mt-1 font-bold leading-tight">
                             {log.description}
                           </p>
-                          <span className="text-[10px] text-slate-400 mt-1 block font-semibold">
+                          <span className="text-[10px] text-slate-400 dark:text-slate-500 mt-1 block font-semibold">
                             {new Date(log.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                           </span>
                         </div>
                       </div>
 
                       <div className="flex items-center gap-2 flex-shrink-0">
-                        <span className={`px-3 py-1 rounded-xl text-sm font-black border-3 border-brand-deep ${
+                        <span className={`px-3 py-1 rounded-xl text-sm font-black border-3 border-brand-deep dark:border-white ${
                           isNegative 
-                            ? 'bg-brand-orange/10 text-brand-orange' 
-                            : 'bg-brand-cyan/20 text-brand-deep'
+                            ? 'bg-brand-orange/10 text-brand-orange dark:text-rose-400' 
+                            : 'bg-brand-cyan/20 text-brand-deep dark:text-brand-cyan'
                         }`}>
                           {isNegative ? log.points : `+${log.points}`}
                         </span>
@@ -1373,7 +1384,7 @@ export default function App() {
                             type="button"
                             onClick={() => handleRevertLog(log.id)}
                             title="Delete transaction and revert score"
-                            className="p-2 rounded-xl bg-white border-3 border-brand-deep text-brand-steel hover:text-brand-orange hover:border-brand-orange transition-all cursor-pointer shadow-[2px_2px_0_#0f172a] active:translate-y-[2px] active:shadow-none"
+                            className="p-2 rounded-xl bg-white dark:bg-slate-800 border-3 border-brand-deep dark:border-white text-brand-steel dark:text-slate-400 hover:text-brand-orange hover:border-brand-orange transition-all cursor-pointer shadow-[2px_2px_0_#0f172a] dark:shadow-[2px_2px_0_#000] active:translate-y-[2px] active:shadow-none"
                           >
                             <Trash2 className="w-4 h-4" />
                           </button>
@@ -1396,7 +1407,7 @@ export default function App() {
               transition={{ duration: 0.2 }}
               className="space-y-4"
             >
-              <div className="text-center py-4 bg-brand-deep text-white border-3 border-brand-deep rounded-2xl shadow-[4px_4px_0_#0f172a] mb-6">
+              <div className="text-center py-4 bg-brand-deep dark:bg-slate-800 text-white border-3 border-brand-deep dark:border-white rounded-2xl shadow-[4px_4px_0_#0f172a] dark:shadow-[4px_4px_0_#000] mb-6">
                 <h2 className="text-xl font-black uppercase tracking-wider">🎮 Official Staycation Rules</h2>
                 <p className="text-xs text-brand-cyan font-bold mt-1">Have fun, keep it fair, and keep the noise under control!</p>
               </div>
@@ -1407,24 +1418,24 @@ export default function App() {
                   return (
                     <div 
                       key={idx}
-                      className="playful-card border-brand-deep bg-white overflow-hidden transition-all duration-200"
+                      className="playful-card border-brand-deep dark:border-white overflow-hidden transition-all duration-200"
                     >
                       <button
                         onClick={() => setExpandedRule(isRuleExpanded ? null : idx)}
-                        className="w-full flex items-center justify-between p-4 font-bold text-left cursor-pointer hover:bg-slate-50 transition-colors focus:outline-none"
+                        className="w-full flex items-center justify-between p-4 font-bold text-left cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors focus:outline-none"
                       >
                         <div className="flex items-center gap-3">
-                          <span className="w-8 h-8 rounded-xl bg-brand-yellow/20 border-2 border-brand-deep flex items-center justify-center font-black text-brand-deep text-sm">
+                          <span className="w-8 h-8 rounded-xl bg-brand-yellow/20 border-2 border-brand-deep dark:border-white flex items-center justify-center font-black text-brand-deep dark:text-brand-yellow text-sm">
                             {idx + 1}
                           </span>
                           <div>
-                            <span className="text-base font-black text-brand-deep flex items-center gap-2">
+                            <span className="text-base font-black text-brand-deep dark:text-white flex items-center gap-2">
                               {rule.title}
                             </span>
-                            <span className="text-xs text-brand-steel font-bold block mt-0.5">{rule.subtitle}</span>
+                            <span className="text-xs text-brand-steel dark:text-slate-400 font-bold block mt-0.5">{rule.subtitle}</span>
                           </div>
                         </div>
-                        <ChevronDown className={`w-5 h-5 text-brand-deep transition-transform duration-200 ${isRuleExpanded ? 'rotate-180' : ''}`} />
+                        <ChevronDown className={`w-5 h-5 text-brand-deep dark:text-slate-400 transition-transform duration-200 ${isRuleExpanded ? 'rotate-180' : ''}`} />
                       </button>
 
                       <AnimatePresence initial={false}>
@@ -1435,7 +1446,7 @@ export default function App() {
                             exit={{ height: 0, opacity: 0 }}
                             transition={{ duration: 0.2 }}
                           >
-                            <div className="p-4 border-t-2 border-brand-deep/10 bg-slate-50/50 text-sm font-semibold text-slate-700 leading-relaxed space-y-2">
+                            <div className="p-4 border-t-2 border-brand-deep/10 dark:border-white/10 bg-slate-50/50 dark:bg-slate-950/20 text-sm font-semibold text-slate-700 dark:text-slate-300 leading-relaxed space-y-2">
                               {rule.content}
                             </div>
                           </motion.div>
@@ -1452,15 +1463,15 @@ export default function App() {
 
       {/* Admin Panel Dashboard (revealed only if logged in) */}
       {isAdmin && (
-        <section className="playful-panel p-5 sm:p-6 mb-8 glow-cyan">
-          <div className="flex items-center justify-between pb-4 border-b-3 border-brand-deep mb-5">
+        <section className="playful-panel p-5 sm:p-6 mb-8 glow-cyan border-brand-deep dark:border-white shadow-[6px_6px_0_var(--shadow-primary)]">
+          <div className="flex items-center justify-between pb-4 border-b-3 border-brand-deep dark:border-white mb-5">
             <div className="flex items-center gap-2">
-              <Unlock className="w-6 h-6 text-brand-deep" />
-              <h3 className="text-xl font-black text-brand-deep">Host Controls 🎮</h3>
+              <Unlock className="w-6 h-6 text-brand-deep dark:text-white" />
+              <h3 className="text-xl font-black text-brand-deep dark:text-white">Host Controls 🎮</h3>
             </div>
             <button 
               onClick={() => setIsAdmin(false)}
-              className="px-3.5 py-1.5 text-xs font-black playful-btn"
+              className="px-3.5 py-1.5 text-xs font-black playful-btn border-brand-deep dark:border-white shadow-[3px_3px_0_var(--shadow-primary)]"
             >
               Lock Board 🔒
             </button>
@@ -1469,8 +1480,8 @@ export default function App() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Column 1: Record Score Form */}
             <form onSubmit={handleScoreSubmit} className="space-y-4">
-              <h4 className="text-base font-black text-brand-deep uppercase tracking-wide flex items-center gap-1.5">
-                <Plus className="w-4 h-4 text-brand-deep stroke-[3]" />
+              <h4 className="text-base font-black text-brand-deep dark:text-white uppercase tracking-wide flex items-center gap-1.5">
+                <Plus className="w-4 h-4 text-brand-deep dark:text-white stroke-[3]" />
                 Log Score Change
               </h4>
 
@@ -1479,10 +1490,10 @@ export default function App() {
                 <button
                   type="button"
                   onClick={() => handleTargetTypeChange('player')}
-                  className={`py-2 rounded-xl text-sm font-black border-3 border-brand-deep transition-all cursor-pointer ${
+                  className={`py-2 rounded-xl text-sm font-black border-3 border-brand-deep dark:border-white transition-all cursor-pointer ${
                     scoreTargetType === 'player'
-                      ? 'bg-brand-deep text-white'
-                      : 'bg-slate-100 text-slate-500 shadow-[2px_2px_0_#0f172a]'
+                      ? 'bg-brand-deep dark:bg-brand-cyan text-white dark:text-brand-deep border-brand-deep dark:border-brand-cyan'
+                      : 'bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 shadow-[2px_2px_0_#0f172a] dark:shadow-[2px_2px_0_#000]'
                   }`}
                 >
                   Player 👤
@@ -1490,10 +1501,10 @@ export default function App() {
                 <button
                   type="button"
                   onClick={() => handleTargetTypeChange('team')}
-                  className={`py-2 rounded-xl text-sm font-black border-3 border-brand-deep transition-all cursor-pointer ${
+                  className={`py-2 rounded-xl text-sm font-black border-3 border-brand-deep dark:border-white transition-all cursor-pointer ${
                     scoreTargetType === 'team'
-                      ? 'bg-brand-deep text-white'
-                      : 'bg-slate-100 text-slate-500 shadow-[2px_2px_0_#0f172a]'
+                      ? 'bg-brand-deep dark:bg-brand-cyan text-white dark:text-brand-deep border-brand-deep dark:border-brand-cyan'
+                      : 'bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 shadow-[2px_2px_0_#0f172a] dark:shadow-[2px_2px_0_#000]'
                   }`}
                 >
                   Team 👥
@@ -1503,10 +1514,10 @@ export default function App() {
               {/* Target Dropdown */}
               <div className="form-control">
                 <label className="label py-1">
-                  <span className="label-text text-brand-deep text-xs font-black">Who gets the score?</span>
+                  <span className="label-text text-brand-deep dark:text-white text-xs font-black">Who gets the score?</span>
                 </label>
                 <select 
-                  className="select select-bordered bg-white text-slate-800 border-3 border-brand-deep rounded-xl select-sm h-11 w-full font-bold focus:outline-none"
+                  className="select playful-input select-sm h-11 w-full font-bold"
                   value={scoreTargetId}
                   onChange={(e) => setScoreTargetId(e.target.value)}
                 >
@@ -1528,10 +1539,10 @@ export default function App() {
                 <button
                   type="button"
                   onClick={() => handleActionTypeChange('points')}
-                  className={`py-2 rounded-xl text-xs font-black border-3 border-brand-deep transition-all cursor-pointer ${
+                  className={`py-2 rounded-xl text-xs font-black border-3 border-brand-deep dark:border-white transition-all cursor-pointer ${
                     scoreActionType === 'points'
-                      ? 'bg-brand-cyan/30 text-brand-deep shadow-[2px_2px_0_#0f172a]'
-                      : 'bg-slate-100 text-slate-500'
+                      ? 'bg-brand-cyan/30 dark:bg-brand-cyan/10 text-brand-deep dark:text-brand-cyan shadow-[2px_2px_0_#0f172a] dark:shadow-[2px_2px_0_#000]'
+                      : 'bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400'
                   }`}
                 >
                   Award Points 🌟
@@ -1539,10 +1550,10 @@ export default function App() {
                 <button
                   type="button"
                   onClick={() => handleActionTypeChange('punishment')}
-                  className={`py-2 rounded-xl text-xs font-black border-3 border-brand-deep transition-all cursor-pointer ${
+                  className={`py-2 rounded-xl text-xs font-black border-3 border-brand-deep dark:border-white transition-all cursor-pointer ${
                     scoreActionType === 'punishment'
-                      ? 'bg-brand-orange/20 text-brand-orange shadow-[2px_2px_0_#0f172a]'
-                      : 'bg-slate-100 text-slate-500'
+                      ? 'bg-brand-orange/20 dark:bg-brand-orange/10 text-brand-orange dark:text-brand-orange shadow-[2px_2px_0_#0f172a] dark:shadow-[2px_2px_0_#000]'
+                      : 'bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400'
                   }`}
                 >
                   Apply Punishment 🛑
@@ -1553,10 +1564,10 @@ export default function App() {
               {scoreActionType === 'points' ? (
                 <div className="form-control">
                   <label className="label py-1">
-                    <span className="label-text text-brand-deep text-xs font-black">Predefined Achievement</span>
+                    <span className="label-text text-brand-deep dark:text-white text-xs font-black">Predefined Achievement</span>
                   </label>
                   <select
-                    className="select select-bordered bg-white text-slate-800 border-3 border-brand-deep rounded-xl select-sm h-11 w-full font-bold focus:outline-none"
+                    className="select playful-input select-sm h-11 w-full font-bold"
                     value={selectedAchievementId}
                     onChange={(e) => setSelectedAchievementId(e.target.value)}
                   >
@@ -1570,10 +1581,10 @@ export default function App() {
               ) : (
                 <div className="form-control">
                   <label className="label py-1">
-                    <span className="label-text text-brand-deep text-xs font-black">Predefined Punishment</span>
+                    <span className="label-text text-brand-deep dark:text-white text-xs font-black">Predefined Punishment</span>
                   </label>
                   <select
-                    className="select select-bordered bg-white text-slate-800 border-3 border-brand-deep rounded-xl select-sm h-11 w-full font-bold focus:outline-none"
+                    className="select playful-input select-sm h-11 w-full font-bold"
                     value={selectedPunishmentId}
                     onChange={(e) => setSelectedPunishmentId(e.target.value)}
                   >
@@ -1590,10 +1601,10 @@ export default function App() {
               <div className="grid grid-cols-2 gap-3">
                 <div className="form-control">
                   <label className="label py-1">
-                    <span className="label-text text-brand-deep text-xs font-black">Game Day</span>
+                    <span className="label-text text-brand-deep dark:text-white text-xs font-black">Game Day</span>
                   </label>
                   <select 
-                    className="select select-bordered bg-white text-slate-800 border-3 border-brand-deep rounded-xl select-sm h-11 w-full font-bold focus:outline-none"
+                    className="select playful-input select-sm h-11 w-full font-bold"
                     value={scoreDay}
                     onChange={(e) => setScoreDay(Number(e.target.value))}
                   >
@@ -1605,14 +1616,14 @@ export default function App() {
 
                 <div className="form-control">
                   <label className="label py-1">
-                    <span className="label-text text-brand-deep text-xs font-black">
+                    <span className="label-text text-brand-deep dark:text-white text-xs font-black">
                       Points value
                     </span>
                   </label>
                   <input
                     type="number"
                     placeholder="Points"
-                    className="input input-bordered bg-white text-slate-800 border-3 border-brand-deep rounded-xl input-sm h-11 w-full font-bold focus:outline-none"
+                    className="input playful-input input-sm h-11 w-full font-bold"
                     value={customPoints}
                     onChange={(e) => setCustomPoints(e.target.value)}
                     required
@@ -1623,12 +1634,12 @@ export default function App() {
               {/* Description */}
               <div className="form-control">
                 <label className="label py-1">
-                  <span className="label-text text-brand-deep text-xs font-black">Log Entry Message</span>
+                  <span className="label-text text-brand-deep dark:text-white text-xs font-black">Log Entry Message</span>
                 </label>
                 <input
                   type="text"
                   placeholder="e.g. Cooked breakfast, Complained about dinner..."
-                  className="input input-bordered bg-white text-slate-800 border-3 border-brand-deep rounded-xl input-sm h-11 w-full font-bold focus:outline-none"
+                  className="input playful-input input-sm h-11 w-full font-bold"
                   value={customDescription}
                   onChange={(e) => setCustomDescription(e.target.value)}
                   required
@@ -1637,7 +1648,7 @@ export default function App() {
 
               <button 
                 type="submit"
-                className={`w-full py-3 text-base font-black uppercase text-brand-deep border-3 border-brand-deep rounded-2xl cursor-pointer shadow-[3px_3px_0px_#0f172a] transition-all active:translate-x-[2px] active:translate-y-[2px] active:shadow-none ${
+                className={`w-full py-3 text-base font-black uppercase text-brand-deep dark:text-white border-3 border-brand-deep dark:border-white rounded-2xl cursor-pointer shadow-[3px_3px_0px_#0f172a] dark:shadow-[3px_3px_0px_#000] transition-all active:translate-x-[2px] active:translate-y-[2px] active:shadow-none ${
                   scoreActionType === 'punishment'
                     ? 'bg-brand-orange text-white hover:bg-brand-orange/85'
                     : 'bg-brand-cyan hover:bg-brand-cyan/85'
@@ -1651,13 +1662,13 @@ export default function App() {
             <div className="space-y-6">
               {/* Change Staycation Day */}
               <div className="space-y-2">
-                <h4 className="text-base font-black text-brand-deep uppercase tracking-wide flex items-center gap-1.5">
-                  <Calendar className="w-4 h-4 text-brand-deep" />
+                <h4 className="text-base font-black text-brand-deep dark:text-white uppercase tracking-wide flex items-center gap-1.5">
+                  <Calendar className="w-4 h-4 text-brand-deep dark:text-white" />
                   Update Current Day
                 </h4>
                 <div className="flex items-center gap-2">
                   <select 
-                    className="select select-bordered bg-white text-slate-800 border-3 border-brand-deep rounded-xl select-sm h-11 flex-1 font-bold focus:outline-none"
+                    className="select playful-input select-sm h-11 flex-1 font-bold"
                     value={editingDay}
                     onChange={(e) => setEditingDay(Number(e.target.value))}
                   >
@@ -1667,7 +1678,7 @@ export default function App() {
                   </select>
                   <button
                     onClick={() => handleUpdateDay(editingDay)}
-                    className="px-4 py-2 rounded-xl bg-brand-deep hover:bg-brand-deep/90 text-white text-xs font-black border-3 border-brand-deep h-11 cursor-pointer shadow-[2px_2px_0px_#0f172a] active:translate-y-[2px] active:shadow-none"
+                    className="px-4 py-2 rounded-xl bg-brand-deep hover:bg-brand-deep/90 text-white text-xs font-black border-3 border-brand-deep dark:border-white h-11 cursor-pointer shadow-[2px_2px_0px_#0f172a] dark:shadow-[2px_2px_0px_#000] active:translate-y-[2px] active:shadow-none"
                   >
                     Set Day
                   </button>
@@ -1676,21 +1687,21 @@ export default function App() {
 
               {/* Add Player */}
               <form onSubmit={handleAddPlayer} className="space-y-2">
-                <h4 className="text-base font-black text-brand-deep uppercase tracking-wide flex items-center gap-1.5">
-                  <User className="w-4 h-4 text-brand-deep" />
+                <h4 className="text-base font-black text-brand-deep dark:text-white uppercase tracking-wide flex items-center gap-1.5">
+                  <User className="w-4 h-4 text-brand-deep dark:text-white" />
                   Add Player
                 </h4>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                   <input
                     type="text"
                     placeholder="Friend's Name"
-                    className="input input-bordered bg-white text-slate-800 border-3 border-brand-deep rounded-xl input-sm h-11 w-full font-bold focus:outline-none"
+                    className="input playful-input input-sm h-11 w-full font-bold"
                     value={newPlayerName}
                     onChange={(e) => setNewPlayerName(e.target.value)}
                     required
                   />
                   <select
-                    className="select select-bordered bg-white text-slate-800 border-3 border-brand-deep rounded-xl select-sm h-11 w-full font-bold focus:outline-none"
+                    className="select playful-input select-sm h-11 w-full font-bold"
                     value={newPlayerTeamId}
                     onChange={(e) => setNewPlayerTeamId(e.target.value)}
                     required
@@ -1705,18 +1716,18 @@ export default function App() {
                   <input
                     type="checkbox"
                     id="newPlayerIsCommittee"
-                    className="checkbox checkbox-sm border-2 border-brand-deep rounded"
+                    className="checkbox checkbox-sm border-2 border-brand-deep dark:border-white rounded"
                     checked={newPlayerIsCommittee}
                     onChange={(e) => setNewPlayerIsCommittee(e.target.checked)}
                   />
-                  <label htmlFor="newPlayerIsCommittee" className="text-xs font-black text-brand-deep cursor-pointer">
+                  <label htmlFor="newPlayerIsCommittee" className="text-xs font-black text-brand-deep dark:text-white cursor-pointer">
                     Game Committee Member 👑
                   </label>
                 </div>
                 <button 
                   type="submit"
                   disabled={!newPlayerName || !newPlayerTeamId}
-                  className="w-full py-2 bg-brand-steel/10 hover:bg-brand-steel/20 text-brand-deep border-3 border-brand-deep disabled:opacity-50 text-xs font-black rounded-xl cursor-pointer shadow-[2px_2px_0px_#0f172a] active:translate-y-[2px] active:shadow-none"
+                  className="w-full py-2 bg-brand-steel/10 dark:bg-slate-800 hover:bg-brand-steel/20 dark:hover:bg-slate-700/50 text-brand-deep dark:text-white border-3 border-brand-deep dark:border-white disabled:opacity-50 text-xs font-black rounded-xl cursor-pointer shadow-[2px_2px_0px_#0f172a] dark:shadow-[2px_2px_0px_#000] active:translate-y-[2px] active:shadow-none"
                 >
                   Add Friend to Game 👤
                 </button>
@@ -1724,13 +1735,13 @@ export default function App() {
 
               {/* Issue Team Warning */}
               <div className="space-y-2">
-                <h4 className="text-base font-black text-brand-deep uppercase tracking-wide flex items-center gap-1.5">
-                  <AlertTriangle className="w-4 h-4 text-brand-deep" />
+                <h4 className="text-base font-black text-brand-deep dark:text-white uppercase tracking-wide flex items-center gap-1.5">
+                  <AlertTriangle className="w-4 h-4 text-brand-deep dark:text-white" />
                   Issue Team Warning
                 </h4>
                 <div className="flex items-center gap-2">
                   <select 
-                    className="select select-bordered bg-white text-slate-800 border-3 border-brand-deep rounded-xl select-sm h-11 flex-1 font-bold focus:outline-none"
+                    className="select playful-input select-sm h-11 flex-1 font-bold"
                     value={warningTeamId}
                     onChange={(e) => setWarningTeamId(e.target.value)}
                   >
@@ -1741,28 +1752,34 @@ export default function App() {
                       </option>
                     ))}
                   </select>
-                  <button
-                    type="button"
-                    onClick={() => handleWarnTeam(warningTeamId)}
-                    disabled={!warningTeamId}
-                    className="px-4 py-2 rounded-xl bg-brand-orange hover:bg-brand-orange/90 text-white text-xs font-black border-3 border-brand-deep h-11 cursor-pointer shadow-[2px_2px_0px_#0f172a] active:translate-y-[2px] active:shadow-none disabled:opacity-50"
-                  >
-                    Warn Team
-                  </button>
+                  {(() => {
+                    const selectedTeamToWarn = data.teams.find(t => t.id === warningTeamId);
+                    const isWarningAlreadyIssued = !!(selectedTeamToWarn && selectedTeamToWarn.warnings && selectedTeamToWarn.warnings > 0);
+                    return (
+                      <button
+                        type="button"
+                        onClick={() => handleWarnTeam(warningTeamId)}
+                        disabled={!warningTeamId || isWarningAlreadyIssued}
+                        className="px-4 py-2 rounded-xl bg-brand-orange hover:bg-brand-orange/90 text-white text-xs font-black border-3 border-brand-deep dark:border-white h-11 cursor-pointer shadow-[2px_2px_0px_#0f172a] dark:shadow-[2px_2px_0px_#000] active:translate-y-[2px] active:shadow-none disabled:opacity-50"
+                      >
+                        {isWarningAlreadyIssued ? 'Warned ⚠️' : 'Warn Team'}
+                      </button>
+                    );
+                  })()}
                 </div>
               </div>
 
               {/* Add Team */}
               <form onSubmit={handleAddTeam} className="space-y-2">
-                <h4 className="text-base font-black text-brand-deep uppercase tracking-wide flex items-center gap-1.5">
-                  <Users className="w-4 h-4 text-brand-deep" />
+                <h4 className="text-base font-black text-brand-deep dark:text-white uppercase tracking-wide flex items-center gap-1.5">
+                  <Users className="w-4 h-4 text-brand-deep dark:text-white" />
                   Add Team
                 </h4>
                 <div className="flex gap-2">
                   <input
                     type="text"
                     placeholder="New Team Name"
-                    className="input input-bordered bg-white text-slate-800 border-3 border-brand-deep rounded-xl input-sm h-11 flex-1 font-bold focus:outline-none"
+                    className="input playful-input input-sm h-11 flex-1 font-bold"
                     value={newTeamName}
                     onChange={(e) => setNewTeamName(e.target.value)}
                     required
@@ -1770,7 +1787,7 @@ export default function App() {
                   <button 
                     type="submit"
                     disabled={!newTeamName}
-                    className="px-4 py-2 bg-brand-steel/10 hover:bg-brand-steel/20 text-brand-deep border-3 border-brand-deep disabled:opacity-50 text-xs font-black rounded-xl h-11 cursor-pointer shadow-[2px_2px_0px_#0f172a] active:translate-y-[2px] active:shadow-none"
+                    className="px-4 py-2 bg-brand-steel/10 dark:bg-slate-800 hover:bg-brand-steel/20 dark:hover:bg-slate-700/50 text-brand-deep dark:text-white border-3 border-brand-deep dark:border-white disabled:opacity-50 text-xs font-black rounded-xl h-11 cursor-pointer shadow-[2px_2px_0px_#0f172a] dark:shadow-[2px_2px_0px_#000] active:translate-y-[2px] active:shadow-none"
                   >
                     Create 👥
                   </button>
@@ -1778,11 +1795,11 @@ export default function App() {
               </form>
 
               {/* Reset Data */}
-              <div className="pt-4 border-t-3 border-brand-deep flex justify-end">
+              <div className="pt-4 border-t-3 border-brand-deep dark:border-white flex justify-end">
                 <button
                   type="button"
                   onClick={handleResetData}
-                  className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-brand-orange/10 text-brand-orange border-3 border-brand-deep hover:bg-brand-orange/20 text-xs font-black transition-all cursor-pointer shadow-[2px_2px_0px_#0f172a] active:translate-y-[2px] active:shadow-none"
+                  className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-brand-orange/10 text-brand-orange border-3 border-brand-deep dark:border-white hover:bg-brand-orange/20 text-xs font-black transition-all cursor-pointer shadow-[2px_2px_0px_#0f172a] dark:shadow-[2px_2px_0px_#000] active:translate-y-[2px] active:shadow-none"
                 >
                   <RotateCcw className="w-3.5 h-3.5 stroke-[3]" />
                   Reset Game Board Data
@@ -1801,21 +1818,21 @@ export default function App() {
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
-              className="bg-white border-3 border-brand-deep w-full max-w-sm rounded-3xl p-6 shadow-[6px_6px_0px_#0f172a] relative"
+              className="playful-modal-card w-full max-w-sm rounded-3xl p-6 relative"
             >
               <button 
                 onClick={() => { setShowPinModal(false); setPin(''); setPinError(''); }}
-                className="absolute top-4 right-4 p-1 rounded-lg text-slate-400 hover:text-brand-deep cursor-pointer"
+                className="absolute top-4 right-4 p-1 rounded-lg text-slate-400 hover:text-brand-deep dark:hover:text-white cursor-pointer"
               >
                 <X className="w-6 h-6 stroke-[3]" />
               </button>
 
               <div className="text-center mb-6">
-                <div className="mx-auto w-12 h-12 rounded-2xl bg-brand-yellow/20 border-3 border-brand-deep flex items-center justify-center mb-3 shadow-[2px_2px_0px_#0f172a]">
-                  <Lock className="w-6 h-6 text-brand-deep" />
+                <div className="mx-auto w-12 h-12 rounded-2xl bg-brand-yellow/20 border-3 border-brand-deep dark:border-white flex items-center justify-center mb-3 shadow-[2px_2px_0px_#0f172a] dark:shadow-[2px_2px_0px_#000]">
+                  <Lock className="w-6 h-6 text-brand-deep dark:text-white" />
                 </div>
-                <h3 className="text-lg font-black text-brand-deep">Secret Host PIN 🔐</h3>
-                <p className="text-xs text-brand-steel font-bold mt-1">
+                <h3 className="text-lg font-black text-brand-deep dark:text-white">Secret Host PIN 🔐</h3>
+                <p className="text-xs text-brand-steel dark:text-slate-400 font-bold mt-1">
                   Input the game passcode to unlock points logging!
                 </p>
               </div>
@@ -1827,7 +1844,7 @@ export default function App() {
                     placeholder="PIN"
                     value={pin}
                     onChange={(e) => { setPin(e.target.value); setPinError(''); }}
-                    className="input input-bordered bg-slate-50 border-3 border-brand-deep text-center text-2xl tracking-widest text-slate-800 h-12 w-full font-black focus:outline-none"
+                    className="input playful-input text-center text-2xl tracking-widest h-12 w-full font-black"
                     required
                     autoFocus
                   />
@@ -1840,7 +1857,7 @@ export default function App() {
 
                 <button
                   type="submit"
-                  className="w-full py-3 bg-brand-yellow hover:bg-brand-yellow/85 text-brand-deep border-3 border-brand-deep font-black rounded-2xl shadow-[3px_3px_0px_#0f172a] transition-all cursor-pointer active:translate-x-[2px] active:translate-y-[2px] active:shadow-none"
+                  className="w-full py-3 bg-brand-yellow hover:bg-brand-yellow/85 text-brand-deep border-3 border-brand-deep dark:border-white font-black rounded-2xl shadow-[3px_3px_0px_#0f172a] dark:shadow-[3px_3px_0px_#000] transition-all cursor-pointer active:translate-x-[2px] active:translate-y-[2px] active:shadow-none"
                 >
                   Unlock Game 🔓
                 </button>
@@ -1850,13 +1867,38 @@ export default function App() {
         )}
       </AnimatePresence>
 
-      {/* Floating Sync indicator */}
-      <div className="fixed bottom-4 right-4 flex items-center gap-2 px-3.5 py-2 rounded-2xl bg-white border-3 border-brand-deep text-[10px] text-brand-deep font-black shadow-[3px_3px_0_#0f172a]">
-        <div className="relative flex h-2.5 w-2.5">
-          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-brand-cyan opacity-75"></span>
-          <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-brand-cyan border border-brand-deep"></span>
-        </div>
-        <span>Syncing... 📡</span>
+      {/* Floating Action Buttons Container */}
+      <div className="fixed bottom-4 right-4 z-40 flex items-center gap-2.5">
+        {/* Theme Toggler */}
+        <button
+          onClick={() => setTheme(prev => prev === 'light' ? 'dark' : 'light')}
+          title={`Switch to ${theme === 'light' ? 'Dark' : 'Light'} Mode`}
+          className="playful-btn p-2.5 rounded-2xl flex items-center justify-center cursor-pointer shadow-[3px_3px_0_var(--shadow-primary)]"
+        >
+          {theme === 'light' ? <Moon className="w-5 h-5 text-indigo-600" /> : <Sun className="w-5 h-5 text-amber-400" />}
+        </button>
+
+        {/* Floating Admin Control Button */}
+        <button
+          onClick={() => isAdmin ? setIsAdmin(false) : setShowPinModal(true)}
+          className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl text-xs font-black transition-all playful-btn cursor-pointer ${
+            isAdmin 
+              ? 'bg-brand-yellow text-brand-deep border-brand-deep' 
+              : 'text-slate-700 hover:text-brand-deep'
+          }`}
+        >
+          {isAdmin ? (
+            <>
+              <Unlock className="w-4.5 h-4.5 text-brand-deep" />
+              <span>Admin Active 🔓</span>
+            </>
+          ) : (
+            <>
+              <Lock className="w-4.5 h-4.5" />
+              <span>Unlock Edit 🔐</span>
+            </>
+          )}
+        </button>
       </div>
     </div>
   );
