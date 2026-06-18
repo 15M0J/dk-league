@@ -16,6 +16,14 @@ const ADMIN_PIN = process.env.ADMIN_PIN || '1234';
 app.use(cors());
 app.use(express.json());
 
+// Prevent caching of API responses
+app.use((req, res, next) => {
+  res.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+  res.set('Pragma', 'no-cache');
+  res.set('Expires', '0');
+  next();
+});
+
 // Predefined Punishments
 const DEFAULT_PUNISHMENTS = [
   { id: 'p1', label: '🤫 Minor Offence (Talking, side comments, distracting)', points: -0.5 },
@@ -86,12 +94,14 @@ const writeData = async (data) => {
       await kv.set('leaderboard_state', data);
     } catch (err) {
       console.error('Error writing to Vercel KV', err);
+      throw new Error('Database write error (KV)');
     }
   } else {
     try {
       fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2));
     } catch (err) {
       console.error('Error writing data file', err);
+      throw new Error('Database write error (local)');
     }
   }
 };
