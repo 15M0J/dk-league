@@ -23,7 +23,7 @@
         "p7_u",
         "p8_u"
       ],
-      "warnings": 2
+      "warnings": 0
     },
     {
       "id": "t3",
@@ -43,7 +43,7 @@
       "id": "p1_u",
       "name": "Deen",
       "teamId": "t1",
-      "score": 0,
+      "score": 2,
       "isCommittee": true
     },
     {
@@ -125,6 +125,16 @@
     }
   ],
   "logs": [
+    {
+      "id": "l_1781781042692_j2k5",
+      "timestamp": "2026-06-18T11:10:42.692Z",
+      "day": 2,
+      "targetType": "player",
+      "targetId": "p1_u",
+      "targetName": "Deen",
+      "points": 2,
+      "description": "Winner"
+    },
     {
       "id": "l_1781581228701_lwxf",
       "timestamp": "2026-06-16T03:40:28.701Z",

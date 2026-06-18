@@ -447,17 +447,28 @@ export default function App() {
           day: scoreDay
         })
       });
-      const resData = await res.json();
-      if (res.ok && resData.success) {
-        setData(resData.leaderboard);
-        notify(pointsToSend > 0 ? `Yahoo! Awarded +${pointsToSend} points! 🎉` : `Oops! Deducted ${pointsToSend} points! 💥`);
-        // Reset inputs to default presets
-        handleActionTypeChange(scoreActionType);
+      if (res.ok) {
+        const resData = await res.json();
+        if (resData.success) {
+          setData(resData.leaderboard);
+          notify(pointsToSend > 0 ? `Yahoo! Awarded +${pointsToSend} points! 🎉` : `Oops! Deducted ${pointsToSend} points! 💥`);
+          // Reset inputs to default presets
+          handleActionTypeChange(scoreActionType);
+        } else {
+          notify(resData.error || 'Failed to submit score', 'error');
+        }
       } else {
-        notify(resData.error || 'Failed to submit score', 'error');
+        let errMsg = 'Failed to submit score';
+        try {
+          const resData = await res.json();
+          errMsg = resData.error || errMsg;
+        } catch {
+          errMsg = `Server error (${res.status}): ${res.statusText}`;
+        }
+        notify(errMsg, 'error');
       }
     } catch {
-      notify('Network error', 'error');
+      notify('Network error (check connection)', 'error');
     }
   };
 

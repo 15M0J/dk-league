@@ -10,7 +10,9 @@ const __dirname = path.dirname(__filename);
 
 const app = express();
 const PORT = process.env.PORT || 3000;
-const DATA_FILE = path.join(__dirname, '..', 'data.json');
+const DATA_FILE = process.env.VERCEL
+  ? '/tmp/data.json'
+  : path.join(__dirname, '..', 'data.json');
 const ADMIN_PIN = process.env.ADMIN_PIN || '1234';
 
 app.use(cors());
@@ -88,8 +90,18 @@ const readData = async () => {
   } else {
     try {
       if (!fs.existsSync(DATA_FILE)) {
-        fs.writeFileSync(DATA_FILE, JSON.stringify(INITIAL_DATA, null, 2));
-        data = INITIAL_DATA;
+        // Fallback to default data.json as template in Vercel serverless environment
+        const defaultPath = path.join(process.cwd(), 'data.json');
+        let initialData = INITIAL_DATA;
+        if (fs.existsSync(defaultPath)) {
+          try {
+            initialData = JSON.parse(fs.readFileSync(defaultPath, 'utf8'));
+          } catch (e) {
+            console.error('Error reading default data.json template', e);
+          }
+        }
+        fs.writeFileSync(DATA_FILE, JSON.stringify(initialData, null, 2));
+        data = initialData;
       } else {
         const raw = fs.readFileSync(DATA_FILE, 'utf8');
         data = JSON.parse(raw);
