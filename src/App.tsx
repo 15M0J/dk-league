@@ -407,17 +407,28 @@ export default function App() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ pin })
       });
-      const resData = await res.json();
-      if (res.ok && resData.success) {
-        setIsAdmin(true);
-        setShowPinModal(false);
-        setPinError('');
-        notify('Unlocked Admin Powers! 🔓');
+      if (res.ok) {
+        const resData = await res.json();
+        if (resData.success) {
+          setIsAdmin(true);
+          setShowPinModal(false);
+          setPinError('');
+          notify('Unlocked Admin Powers! 🔓');
+        } else {
+          setPinError('Incorrect PIN, try again! 🤨');
+        }
       } else {
-        setPinError('Incorrect PIN, try again! 🤨');
+        let errMsg = 'Incorrect PIN, try again! 🤨';
+        try {
+          const resData = await res.json();
+          errMsg = resData.error || errMsg;
+        } catch {
+          errMsg = `Verification server error (${res.status})`;
+        }
+        setPinError(errMsg);
       }
     } catch {
-      setPinError('Error verifying PIN');
+      setPinError('Error verifying PIN (check connection)');
     }
   };
 
@@ -481,15 +492,26 @@ export default function App() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ pin, logId })
       });
-      const resData = await res.json();
-      if (res.ok && resData.success) {
-        setData(resData.leaderboard);
-        notify('Event reverted! Scores updated! ↩️');
+      if (res.ok) {
+        const resData = await res.json();
+        if (resData.success) {
+          setData(resData.leaderboard);
+          notify('Event reverted! Scores updated! ↩️');
+        } else {
+          notify(resData.error || 'Failed to revert transaction', 'error');
+        }
       } else {
-        notify(resData.error || 'Failed to revert transaction', 'error');
+        let errMsg = 'Failed to revert transaction';
+        try {
+          const resData = await res.json();
+          errMsg = resData.error || errMsg;
+        } catch {
+          errMsg = `Server error (${res.status}): ${res.statusText}`;
+        }
+        notify(errMsg, 'error');
       }
     } catch {
-      notify('Network error', 'error');
+      notify('Network error (check connection)', 'error');
     }
   };
 
@@ -521,17 +543,28 @@ export default function App() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ pin, players: updatedPlayers, teams: updatedTeams })
       });
-      const resData = await res.json();
-      if (res.ok && resData.success) {
-        setData(resData.leaderboard);
-        notify(`Welcome to the game, ${newPlayerName}! 👋`);
-        setNewPlayerName('');
-        setNewPlayerIsCommittee(false);
+      if (res.ok) {
+        const resData = await res.json();
+        if (resData.success) {
+          setData(resData.leaderboard);
+          notify(`Welcome to the game, ${newPlayerName}! 👋`);
+          setNewPlayerName('');
+          setNewPlayerIsCommittee(false);
+        } else {
+          notify(resData.error || 'Failed to add player', 'error');
+        }
       } else {
-        notify(resData.error || 'Failed to add player', 'error');
+        let errMsg = 'Failed to add player';
+        try {
+          const resData = await res.json();
+          errMsg = resData.error || errMsg;
+        } catch {
+          errMsg = `Server error (${res.status}): ${res.statusText}`;
+        }
+        notify(errMsg, 'error');
       }
     } catch {
-      notify('Network error', 'error');
+      notify('Network error (check connection)', 'error');
     }
   };
 
@@ -556,16 +589,27 @@ export default function App() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ pin, teams: updatedTeams })
       });
-      const resData = await res.json();
-      if (res.ok && resData.success) {
-        setData(resData.leaderboard);
-        notify(`Created Team: ${newTeamName} 🏁`);
-        setNewTeamName('');
+      if (res.ok) {
+        const resData = await res.json();
+        if (resData.success) {
+          setData(resData.leaderboard);
+          notify(`Created Team: ${newTeamName} 🏁`);
+          setNewTeamName('');
+        } else {
+          notify(resData.error || 'Failed to add team', 'error');
+        }
       } else {
-        notify(resData.error || 'Failed to add team', 'error');
+        let errMsg = 'Failed to add team';
+        try {
+          const resData = await res.json();
+          errMsg = resData.error || errMsg;
+        } catch {
+          errMsg = `Server error (${res.status}): ${res.statusText}`;
+        }
+        notify(errMsg, 'error');
       }
     } catch {
-      notify('Network error', 'error');
+      notify('Network error (check connection)', 'error');
     }
   };
 
@@ -578,15 +622,26 @@ export default function App() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ pin, currentDay: day })
       });
-      const resData = await res.json();
-      if (res.ok && resData.success) {
-        setData(resData.leaderboard);
-        notify(`Moved time forward to Day ${day}! 📅`);
+      if (res.ok) {
+        const resData = await res.json();
+        if (resData.success) {
+          setData(resData.leaderboard);
+          notify(`Moved time forward to Day ${day}! 📅`);
+        } else {
+          notify(resData.error || 'Failed to update day', 'error');
+        }
       } else {
-        notify(resData.error || 'Failed to update day', 'error');
+        let errMsg = 'Failed to update day';
+        try {
+          const resData = await res.json();
+          errMsg = resData.error || errMsg;
+        } catch {
+          errMsg = `Server error (${res.status}): ${res.statusText}`;
+        }
+        notify(errMsg, 'error');
       }
     } catch {
-      notify('Network error', 'error');
+      notify('Network error (check connection)', 'error');
     }
   };
 
@@ -603,16 +658,27 @@ export default function App() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ pin, targetId: teamId, day: scoreDay })
       });
-      const resData = await res.json();
-      if (res.ok && resData.success) {
-        setData(resData.leaderboard);
-        notify(`General Warning issued to ${team.name}! ⚠️`);
-        setWarningTeamId(data.teams[0]?.id || '');
+      if (res.ok) {
+        const resData = await res.json();
+        if (resData.success) {
+          setData(resData.leaderboard);
+          notify(`General Warning issued to ${team.name}! ⚠️`);
+          setWarningTeamId(data.teams[0]?.id || '');
+        } else {
+          notify(resData.error || 'Failed to issue warning', 'error');
+        }
       } else {
-        notify(resData.error || 'Failed to issue warning', 'error');
+        let errMsg = 'Failed to issue warning';
+        try {
+          const resData = await res.json();
+          errMsg = resData.error || errMsg;
+        } catch {
+          errMsg = `Server error (${res.status}): ${res.statusText}`;
+        }
+        notify(errMsg, 'error');
       }
     } catch {
-      notify('Network error', 'error');
+      notify('Network error (check connection)', 'error');
     }
   };
 
@@ -625,15 +691,26 @@ export default function App() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ pin })
       });
-      const resData = await res.json();
-      if (res.ok && resData.success) {
-        setData(resData.leaderboard);
-        notify('Board game reset to starting positions! 🔄');
+      if (res.ok) {
+        const resData = await res.json();
+        if (resData.success) {
+          setData(resData.leaderboard);
+          notify('Board game reset to starting positions! 🔄');
+        } else {
+          notify(resData.error || 'Reset failed', 'error');
+        }
       } else {
-        notify(resData.error || 'Reset failed', 'error');
+        let errMsg = 'Reset failed';
+        try {
+          const resData = await res.json();
+          errMsg = resData.error || errMsg;
+        } catch {
+          errMsg = `Server error (${res.status}): ${res.statusText}`;
+        }
+        notify(errMsg, 'error');
       }
     } catch {
-      notify('Network error', 'error');
+      notify('Network error (check connection)', 'error');
     }
   };
 

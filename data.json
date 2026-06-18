@@ -16,7 +16,7 @@
     {
       "id": "t2",
       "name": "Team Misfits",
-      "score": 0,
+      "score": -1,
       "members": [
         "p5_u",
         "p6_u",
@@ -125,6 +125,16 @@
     }
   ],
   "logs": [
+    {
+      "id": "l_1781781338964_h1sr",
+      "timestamp": "2026-06-18T11:15:38.964Z",
+      "day": 2,
+      "targetType": "team",
+      "targetId": "t2",
+      "targetName": "Team Misfits",
+      "points": -1,
+      "description": "🗣️ Moderate Offence (Talking over player, hints, arguing)"
+    },
     {
       "id": "l_1781781042692_j2k5",
       "timestamp": "2026-06-18T11:10:42.692Z",
