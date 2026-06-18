@@ -316,15 +316,18 @@ export default function App() {
   }, [fetchData]);
 
   // Set default score target once data is fetched
+  // Sync local day states when backend currentDay changes
+  useEffect(() => {
+    if (data) {
+      setScoreDay(data.currentDay);
+      setEditingDay(data.currentDay);
+    }
+  }, [data?.currentDay]);
+
+  // Set default score target once data is fetched
   useEffect(() => {
     if (data) {
       Promise.resolve().then(() => {
-        if (scoreDay !== data.currentDay) {
-          setScoreDay(data.currentDay);
-        }
-        if (editingDay !== data.currentDay) {
-          setEditingDay(data.currentDay);
-        }
         if (!scoreTargetId) {
           if (scoreTargetType === 'player' && data.players.length > 0) {
             setScoreTargetId(data.players[0].id);
@@ -340,7 +343,7 @@ export default function App() {
         }
       });
     }
-  }, [data, scoreTargetType, scoreTargetId, selectedPunishmentId, warningTeamId, scoreDay, editingDay]);
+  }, [data, scoreTargetType, scoreTargetId, selectedPunishmentId, warningTeamId]);
 
   // Update default target when target type changes
   const handleTargetTypeChange = (type: 'player' | 'team') => {

@@ -23,7 +23,7 @@
         "p7_u",
         "p8_u"
       ],
-      "warnings": 0
+      "warnings": 2
     },
     {
       "id": "t3",
@@ -124,5 +124,26 @@
       "isCommittee": false
     }
   ],
-  "logs": []
+  "logs": [
+    {
+      "id": "l_1781581228701_lwxf",
+      "timestamp": "2026-06-16T03:40:28.701Z",
+      "day": 1,
+      "targetType": "team",
+      "targetId": "t2",
+      "targetName": "Team Misfits",
+      "points": 0,
+      "description": "⚠️ General Warning Issued: Subsequent offences will incur deductions."
+    },
+    {
+      "id": "l_1781581201344_2qvr",
+      "timestamp": "2026-06-16T03:40:01.344Z",
+      "day": 1,
+      "targetType": "team",
+      "targetId": "t2",
+      "targetName": "Team Misfits",
+      "points": 0,
+      "description": "⚠️ General Warning Issued: Subsequent offences will incur deductions."
+    }
+  ]
 }
