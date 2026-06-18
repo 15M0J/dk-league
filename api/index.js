@@ -57,38 +57,55 @@ const INITIAL_DATA = {
   logs: []
 };
 
+// Helper: Recalculate Warnings for teams on the current active day
+const recalculateWarnings = (data) => {
+  if (data && data.teams && data.logs) {
+    for (const team of data.teams) {
+      team.warnings = data.logs.filter(
+        log => log.targetType === 'team' && 
+               log.targetId === team.id && 
+               log.day === data.currentDay && 
+               log.description && log.description.includes('Warning')
+      ).length;
+    }
+  }
+};
+
 // Helper: Read DB
 const readData = async () => {
+  let data;
   if (process.env.KV_REST_API_URL) {
     try {
-      const data = await kv.get('leaderboard_state');
+      data = await kv.get('leaderboard_state');
       if (!data) {
+        data = INITIAL_DATA;
         await kv.set('leaderboard_state', INITIAL_DATA);
-        return INITIAL_DATA;
       }
-      return data;
     } catch (err) {
       console.error('Error reading from Vercel KV, falling back to local fallback if available', err);
-      // Fallback to local file read if it fails/error, or return INITIAL_DATA
-      return INITIAL_DATA;
+      data = INITIAL_DATA;
     }
   } else {
     try {
       if (!fs.existsSync(DATA_FILE)) {
         fs.writeFileSync(DATA_FILE, JSON.stringify(INITIAL_DATA, null, 2));
-        return INITIAL_DATA;
+        data = INITIAL_DATA;
+      } else {
+        const raw = fs.readFileSync(DATA_FILE, 'utf8');
+        data = JSON.parse(raw);
       }
-      const raw = fs.readFileSync(DATA_FILE, 'utf8');
-      return JSON.parse(raw);
     } catch (err) {
       console.error('Error reading data file, resetting to initial', err);
-      return INITIAL_DATA;
+      data = INITIAL_DATA;
     }
   }
+  recalculateWarnings(data);
+  return data;
 };
 
 // Helper: Write DB
 const writeData = async (data) => {
+  recalculateWarnings(data);
   if (process.env.KV_REST_API_URL) {
     try {
       await kv.set('leaderboard_state', data);
@@ -203,9 +220,6 @@ app.post('/api/team/warn', verifyPin, async (req, res) => {
   const team = data.teams.find(t => t.id === targetId);
   if (!team) return res.status(404).json({ error: 'Team not found' });
 
-  // Increment warnings
-  team.warnings = (team.warnings || 0) + 1;
-
   // Create Log Entry for Warning
   const newLog = {
     id: 'l_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4),
@@ -243,10 +257,6 @@ app.post('/api/score/revert', verifyPin, async (req, res) => {
     const team = data.teams.find(t => t.id === log.targetId);
     if (team) {
       team.score -= log.points;
-      // Also decrement warning count if this was a warning log
-      if (log.description && log.description.includes('Warning')) {
-        team.warnings = Math.max(0, (team.warnings || 0) - 1);
-      }
     }
   }
 
