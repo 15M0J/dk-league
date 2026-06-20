@@ -4,6 +4,9 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { kv } from '@vercel/kv';
+import pg from 'pg';
+
+const { Pool } = pg;
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -73,10 +76,36 @@ const recalculateWarnings = (data) => {
   }
 };
 
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL || process.env.POSTGRES_URL,
+  ssl: {
+    rejectUnauthorized: false
+  }
+});
+
 // Helper: Read DB
 const readData = async () => {
   let data;
-  if (process.env.KV_REST_API_URL) {
+  if (process.env.DATABASE_URL || process.env.POSTGRES_URL) {
+    try {
+      await pool.query(`
+        CREATE TABLE IF NOT EXISTS state (
+          key VARCHAR(255) PRIMARY KEY,
+          value JSONB NOT NULL
+        )
+      `);
+      const res = await pool.query("SELECT value FROM state WHERE key = 'leaderboard_state'");
+      if (res.rows.length === 0) {
+        data = INITIAL_DATA;
+        await pool.query("INSERT INTO state (key, value) VALUES ('leaderboard_state', $1)", [JSON.stringify(INITIAL_DATA)]);
+      } else {
+        data = res.rows[0].value;
+      }
+    } catch (err) {
+      console.error('Error reading from PostgreSQL, falling back to local fallback if available', err);
+      data = INITIAL_DATA;
+    }
+  } else if (process.env.KV_REST_API_URL) {
     try {
       data = await kv.get('leaderboard_state');
       if (!data) {
@@ -118,7 +147,17 @@ const readData = async () => {
 // Helper: Write DB
 const writeData = async (data) => {
   recalculateWarnings(data);
-  if (process.env.KV_REST_API_URL) {
+  if (process.env.DATABASE_URL || process.env.POSTGRES_URL) {
+    try {
+      await pool.query(`
+        INSERT INTO state (key, value) VALUES ('leaderboard_state', $1)
+        ON CONFLICT (key) DO UPDATE SET value = $1
+      `, [JSON.stringify(data)]);
+    } catch (err) {
+      console.error('Error writing to PostgreSQL', err);
+      throw new Error('Database write error (Postgres)');
+    }
+  } else if (process.env.KV_REST_API_URL) {
     try {
       await kv.set('leaderboard_state', data);
     } catch (err) {
