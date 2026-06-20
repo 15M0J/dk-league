@@ -826,7 +826,15 @@ export default function App() {
 
   // Sort teams & players by score descending
   const sortedTeams = [...data.teams].sort((a, b) => getTeamTotalScore(b) - getTeamTotalScore(a));
-  const sortedPlayers = [...data.players].sort((a, b) => b.score - a.score);
+  const sortedPlayers = [...data.players].sort((a, b) => {
+    if (b.score !== a.score) {
+      return b.score - a.score;
+    }
+    // If scores are tied, Matilda comes first
+    if (a.name === 'Matilda') return -1;
+    if (b.name === 'Matilda') return 1;
+    return 0;
+  });
 
   // Top performers podium targets
   const firstPlace = sortedPlayers[0] || null;
