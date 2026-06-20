@@ -200,6 +200,7 @@ const RULES_DATA = [
         <li><strong>No Changes:</strong> No changing players after a round has started.</li>
         <li><strong>Respect the Scorekeeper:</strong> No pressuring the scorekeeper or arguing for points after the next round begins.</li>
         <li><strong>Loopholes:</strong> Bending rules using loopholes is banned. The committee rules against anything violating the spirit of the game.</li>
+        <li><strong>Threatening to Quit:</strong> Anyone who threatens to quit the game in any way will result in their team getting <span className="text-rose-600 font-bold">0 points</span> for that entire round.</li>
       </ul>
     )
   },

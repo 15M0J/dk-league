@@ -34,7 +34,8 @@ const DEFAULT_PUNISHMENTS = [
   { id: 'p1', label: '🤫 Minor Offence (Talking, side comments, distracting)', points: -0.5 },
   { id: 'p2', label: '🗣️ Moderate Offence (Talking over player, hints, arguing)', points: -1 },
   { id: 'p3', label: '⚠️ Major Offence (Disruption, cheating, insults, ignoring warnings)', points: -2 },
-  { id: 'p4', label: '🚫 Custom Penalty', points: 0 }
+  { id: 'p4', label: '🤬 Threat to quit (Team gets 0 for the round)', points: 0 },
+  { id: 'p5', label: '🚫 Custom Penalty', points: 0 }
 ];
 
 // Initial Mock Data
@@ -43,7 +44,7 @@ const INITIAL_DATA = {
   teams: [
     { id: 't1', name: 'Team NHF', score: 0, members: ['p1_u', 'p2_u', 'p3_u', 'p4_u'], warnings: 0 },
     { id: 't2', name: 'Team Misfits', score: 0, members: ['p5_u', 'p6_u', 'p7_u', 'p8_u'], warnings: 0 },
-    { id: 't3', name: 'Team DTTI', score: 0, members: ['p9_u', 'p10_u', 'p11_u', 'p12_u'], warnings: 0 }
+    { id: 't3', name: 'Team DITT', score: 0, members: ['p9_u', 'p10_u', 'p11_u', 'p12_u'], warnings: 0 }
   ],
   players: [
     { id: 'p1_u', name: 'Deen', teamId: 't1', score: 0, isCommittee: true },
@@ -100,6 +101,28 @@ const readData = async () => {
         await pool.query("INSERT INTO state (key, value) VALUES ('leaderboard_state', $1)", [JSON.stringify(INITIAL_DATA)]);
       } else {
         data = res.rows[0].value;
+        // Self-migration: Update Team DTTI name to Team DITT in database
+        let migrated = false;
+        const t3 = data.teams?.find(t => t.id === 't3');
+        if (t3 && t3.name === 'Team DTTI') {
+          t3.name = 'Team DITT';
+          migrated = true;
+        }
+        if (data.logs) {
+          for (const log of data.logs) {
+            if (log.targetType === 'team' && log.targetId === 't3' && log.targetName === 'Team DTTI') {
+              log.targetName = 'Team DITT';
+              migrated = true;
+            }
+          }
+        }
+        if (migrated) {
+          await pool.query(`
+            INSERT INTO state (key, value) VALUES ('leaderboard_state', $1)
+            ON CONFLICT (key) DO UPDATE SET value = $1
+          `, [JSON.stringify(data)]);
+          console.log("Self-migration: Updated Team DTTI to Team DITT in database");
+        }
       }
     } catch (err) {
       console.error('Error reading from PostgreSQL, falling back to local fallback if available', err);
